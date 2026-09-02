@@ -7,6 +7,8 @@ on:
   workflow_dispatch:
 
 # Grant the workflow the permissions it needs to publish to Pages.
+# "pages: write" lets the workflow create the deployment; "id-token: write"
+# is required for OIDC auth against the Pages API.
 permissions:
   contents: read
   pages: write
@@ -21,6 +23,10 @@ jobs:
   deploy:
     name: 🚀 Deploy static site
     runs-on: ubuntu-latest
+
+    # Use the `github-pages` environment. If it doesn't exist yet (brand-new
+    # repo), it will be auto-created on first deploy. The URL is exposed
+    # via the step output AND printed in the Actions summary.
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -32,11 +38,6 @@ jobs:
       - name: 🔧 Setup Pages
         id: pages
         uses: actions/configure-pages@v5
-        # If Pages isn't enabled yet, fail with a friendly, actionable message
-        # instead of the cryptic GitHub API 404. The user then enables Pages
-        # in repo Settings → Pages and re-runs the workflow.
-        with:
-          enablement: true
 
       - name: 📦 Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -47,3 +48,14 @@ jobs:
       - name: 🚀 Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: 🔗 Print live URL
+        if: always()
+        run: |
+          echo "## 🌐 Live site" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Deployment finished at $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo ""
+          echo "✅ Live URL: ${{ steps.deployment.outputs.page_url }}"

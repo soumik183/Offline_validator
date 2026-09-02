@@ -1,0 +1,91 @@
+name: Codec smoke test
+
+# Run on push/PRs so we catch regressions in the hash codec.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    name: 🧪 Smoke test OVHash
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 🧪 Run codec test
+        run: |
+          node -e "
+            const w = {};
+            w.crypto = require('crypto').webcrypto;
+            w.msCrypto = w.crypto;
+            w.TextEncoder = require('util').TextEncoder;
+            w.TextDecoder = require('util').TextDecoder;
+            w.btoa = (s) => Buffer.from(s, 'binary').toString('base64');
+            w.atob = (s) => Buffer.from(s, 'base64').toString('binary');
+            global.window = w;
+            global.self = w;
+
+            // Stub the IIFE so it can find OVHash from the local file
+            const fs = require('fs');
+            const src = fs.readFileSync('js/hash.js', 'utf8');
+            new Function('window', 'self', src)(w, w);
+
+            const { OVHash } = w;
+            const tests = [];
+            function assert(name, cond) { tests.push([name, cond]); }
+
+            // v1 round-trip
+            const v1t = OVHash.encode('hello world', 'salt');
+            assert('v1 round-trip', OVHash.decode(v1t) === 'hello world');
+            assert('v1 wrong salt fails', OVHash.decode(v1t, 'bad') === null);
+
+            // v2 round-trip with all 8 fields
+            const obj = {
+              entity: 'user-9821', product: 'ov-pro', version: 3,
+              issued: 1717353600, expires: 1750000000,
+              plan: 'enterprise', flags: ['api','export','beta'],
+              serial: 'LIC-2024-ABCD-XYZW',
+            };
+            const r = OVHash.structEncode(obj);
+            const dec = OVHash.structDecode(r.token, null, ['api','export','beta']);
+            assert('v2 round-trip', dec && dec.payload.entity === 'user-9821');
+            assert('v2 flags decoded', dec && dec.payload.flags[0] === 'api');
+            assert('v2 token length < 200', r.token.length < 200);
+            assert('v2 verify clean', OVHash.structVerify(r.token));
+            const tampered = r.token.slice(0, -2) + (r.token.slice(-1) === 'A' ? 'B' : 'A');
+            assert('v2 tampered fails', OVHash.structVerify(tampered) === false);
+
+            // Partial v2 (only 3 fields)
+            const r2 = OVHash.structEncode({ entity: 'u', product: 'p', version: 1, issued: 1, serial: 's' });
+            const dec2 = OVHash.structDecode(r2.token);
+            assert('v2 partial round-trip', dec2 && dec2.payload.entity === 'u');
+            assert('v2 partial has 5 fields', dec2 && Object.keys(dec2.payload).filter(k => !k.startsWith('_')).length === 5);
+
+            // License file generation
+            const lic = OVHash.makeLicenseFile({ entity:'u', product:'p', version:1, issued:1, serial:'s' });
+            assert('license file has token', lic && lic.token && lic.payload);
+            const fileDec = OVHash.structDecode(lic.token);
+            assert('license file decodes', fileDec && fileDec.payload.entity === 'u');
+
+            // Deterministic encode
+            const t1 = OVHash.structEncodeDeterministic({ entity:'u', product:'p', version:1, issued:1, serial:'s' }, 'fix').token;
+            const t2 = OVHash.structEncodeDeterministic({ entity:'u', product:'p', version:1, issued:1, serial:'s' }, 'fix').token;
+            assert('deterministic encode', t1 === t2);
+
+            // Report
+            let pass = 0, fail = 0;
+            for (const [n, ok] of tests) {
+              console.log((ok ? '✅' : '❌') + ' ' + n);
+              ok ? pass++ : fail++;
+            }
+            console.log('\n' + pass + ' passed, ' + fail + ' failed');
+            process.exit(fail ? 1 : 0);
+          "

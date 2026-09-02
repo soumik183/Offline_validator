@@ -1,0 +1,31 @@
+<!--
+  GitHub Pages will serve this file on any missing route.
+  The SPA (Navigo) handles client-side routing, but if someone hits
+  /validator/email directly without JS, we still want a graceful response.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offline Validator — Page not found</title>
+  <meta http-equiv="refresh" content="3;url=/" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='6' fill='%236366f1'/><path d='M9 12.5l2 2 4-4.5' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>" />
+  <style>
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+           background: #020617; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif;
+           text-align: center; padding: 2rem; }
+    h1 { font-size: 2rem; margin: 0 0 0.5rem; }
+    p  { color: #94a3b8; margin: 0 0 1.5rem; }
+    a  { color: #818cf8; text-decoration: none; border-bottom: 1px dashed currentColor; }
+    a:hover { color: #c7d2fe; }
+  </style>
+</head>
+<body>
+  <div>
+    <h1>404 — Page not found</h1>
+    <p>Redirecting to home in 3 seconds…</p>
+    <p><a href="/">Go now →</a></p>
+  </div>
+</body>
+</html>

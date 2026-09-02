@@ -1,0 +1,4 @@
+---
+# Tell GitHub Pages this is a pure static site — no Jekyll processing.
+# Without this, files starting with `_` get ignored and symlinks break.
+---

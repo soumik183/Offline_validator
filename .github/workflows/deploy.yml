@@ -32,6 +32,11 @@ jobs:
       - name: 🔧 Setup Pages
         id: pages
         uses: actions/configure-pages@v5
+        # If Pages isn't enabled yet, fail with a friendly, actionable message
+        # instead of the cryptic GitHub API 404. The user then enables Pages
+        # in repo Settings → Pages and re-runs the workflow.
+        with:
+          enablement: true
 
       - name: 📦 Upload artifact
         uses: actions/upload-pages-artifact@v3

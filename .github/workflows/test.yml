@@ -18,7 +18,7 @@ jobs:
       - name: 🟢 Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22  # Current LTS (Node 20 was deprecated Sept 2025)
 
       - name: 🧪 Run codec test
         run: |

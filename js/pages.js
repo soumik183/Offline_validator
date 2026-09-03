@@ -1,179 +1,127 @@
 /**
  * pages.js
- * Minimalist Black & White Single-Page Template for Offline Validator.
- * Purely focused on the Hash Option and Fields.
+ * Minimalist Black & White Multi-Format Suite Layout & Tool Templates.
+ * 100% Client-Side.
  */
 (function (global) {
   'use strict';
 
+  // Tool categories and subtools configuration
+  const CATEGORIES = [
+    {
+      id: 'identifiers',
+      name: '🧬 IDENTIFIERS',
+      tools: [
+        { id: 'uuid', name: 'UUID Generator', desc: 'Generate RFC 4122 v4, v1, or Nil UUIDs' },
+        { id: 'userid', name: 'User ID Generator', desc: 'Generate custom prefixed user / entity IDs' },
+        { id: 'randomid', name: 'Random ID', desc: 'Cryptographically random alphanumeric tokens' },
+        { id: 'nanoid', name: 'Nano ID', desc: 'Compact URL-friendly collision-resistant IDs' },
+        { id: 'customid', name: 'Custom ID', desc: 'Pattern template-based ID generation' },
+      ]
+    },
+    {
+      id: 'hashing',
+      name: '🔐 HASHING',
+      tools: [
+        { id: 'sha256', name: 'SHA-256', desc: '256-bit secure hash (supports 1 or 2+ values)' },
+        { id: 'sha384', name: 'SHA-384', desc: '384-bit cryptographic hash (supports 1 or 2+ values)' },
+        { id: 'sha512', name: 'SHA-512', desc: '512-bit high-security hash (supports 1 or 2+ values)' },
+        { id: 'filehash', name: 'File Hash', desc: 'Drag & drop any file to compute hashes locally' },
+        { id: 'customcodec', name: 'Custom Codec', desc: 'Our reversible XOR stream + structured license codec' },
+      ]
+    },
+    {
+      id: 'encoding',
+      name: '🔄 ENCODING',
+      tools: [
+        { id: 'base64', name: 'Base64', desc: 'UTF-8 safe Base64 encoder & decoder' },
+        { id: 'url', name: 'URL', desc: 'URL and URI Component encoder & decoder' },
+        { id: 'hex', name: 'Hex', desc: 'Text to Hexadecimal byte encoder & decoder' },
+        { id: 'binary', name: 'Binary', desc: 'Text to 8-bit Binary encoder & decoder' },
+        { id: 'html', name: 'HTML Entities', desc: 'HTML escape & unescape entity codec' },
+        { id: 'customtoken', name: 'Custom Token', desc: 'Our reversible v1 & v2 token codec' },
+      ]
+    },
+    {
+      id: 'datetime',
+      name: '📅 DATE & TIME',
+      tools: [
+        { id: 'dateconverter', name: 'Date Converter', desc: 'Convert ISO 8601, UTC, Local, and Unix timestamps' },
+        { id: 'timestampconverter', name: 'Timestamp Converter', desc: 'Unix seconds & milliseconds to human date' },
+        { id: 'timezoneconverter', name: 'Timezone Converter', desc: 'Live multi-city global timezone comparison' },
+        { id: 'dateformatter', name: 'Date Formatter', desc: 'Format dates with customizable patterns' },
+      ]
+    },
+    {
+      id: 'random',
+      name: '🎲 RANDOM',
+      tools: [
+        { id: 'number', name: 'Number', desc: 'Cryptographically secure random numbers' },
+        { id: 'string', name: 'String', desc: 'Random strings with custom charset filters' },
+        { id: 'uuid', name: 'UUID', desc: 'One-click random UUID v4 generator' },
+        { id: 'color', name: 'Color', desc: 'Random colors in HEX, RGB, and HSL' },
+        { id: 'customid', name: 'Custom ID', desc: 'Random template-based identifiers' },
+      ]
+    },
+    {
+      id: 'text',
+      name: '🔤 TEXT',
+      tools: [
+        { id: 'caseconverter', name: 'Case Converter', desc: 'Convert to camel, snake, kebab, UPPER, Title, etc.' },
+        { id: 'sluggenerator', name: 'Slug Generator', desc: 'Generate clean URL slugs from text' },
+        { id: 'textcounter', name: 'Text Counter', desc: 'Words, characters, lines, bytes, and reading time' },
+        { id: 'reversetext', name: 'Reverse Text', desc: 'Reverse by characters, words, or lines' },
+        { id: 'removeduplicates', name: 'Remove Duplicate Lines', desc: 'Deduplicate, sort, and trim lines' },
+      ]
+    },
+    {
+      id: 'converters',
+      name: '🔢 CONVERTERS',
+      tools: [
+        { id: 'numberbase', name: 'Number Base', desc: 'Binary, Octal, Decimal, and Hexadecimal conversion' },
+        { id: 'jsonformatter', name: 'JSON Formatter', desc: 'Beautify, minify, and validate JSON syntax' },
+        { id: 'jsonyaml', name: 'JSON ↔ YAML', desc: 'Bidirectional JSON and YAML converter' },
+        { id: 'csvjson', name: 'CSV ↔ JSON', desc: 'Bidirectional CSV and JSON table converter' },
+      ]
+    },
+  ];
+
   function singlePage() {
     return `
-    <div class="max-w-3xl mx-auto px-4 py-8 sm:py-12">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
       <!-- Minimalist Header -->
-      <div class="mb-8 border-b border-neutral-800 pb-6">
+      <div class="mb-6 border-b border-neutral-800 pb-5">
         <div class="flex items-center justify-between gap-4 mb-2">
           <div class="inline-flex items-center gap-2">
             <span class="w-2.5 h-2.5 bg-white rounded-full"></span>
-            <span class="text-xs font-bold tracking-widest uppercase text-neutral-400">OFFLINE HASH ENGINE</span>
+            <span class="text-xs font-bold tracking-widest uppercase text-neutral-400">OFFLINE MULTI-FORMAT SUITE</span>
           </div>
-          <span class="badge-mono text-[10px]">100% IN-BROWSER</span>
+          <span class="badge-mono text-[10px]">100% IN-BROWSER · ZERO SERVERS</span>
         </div>
-        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-1">Hash Generator</h1>
-        <p class="text-xs sm:text-sm text-neutral-400 mt-1">Select 1 or multiple values to generate cryptographic hashes and reversible tokens instantly.</p>
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-1">Developer Utility Suite</h1>
+        <p class="text-xs sm:text-sm text-neutral-400 mt-1">Multi-format encoder, decoder, hash engine, date utilities, random generators, and format converters.</p>
       </div>
 
-      <!-- Step 1: Select Hash Algorithm -->
-      <div class="card-mono p-5 mb-5">
-        <div class="flex items-center justify-between mb-3">
-          <label class="text-xs font-bold uppercase tracking-wider text-neutral-300">1. Select Algorithm</label>
-          <span id="algo-spec" class="text-[11px] text-neutral-400 font-mono">256-bit secure hash</span>
-        </div>
-        <div class="flex flex-wrap gap-2" id="algo-pills">
-          <button type="button" class="pill-tab active" data-algo="SHA-256">SHA-256</button>
-          <button type="button" class="pill-tab" data-algo="SHA-512">SHA-512</button>
-          <button type="button" class="pill-tab" data-algo="SHA-1">SHA-1</button>
-          <button type="button" class="pill-tab" data-algo="MD5">MD5</button>
-          <button type="button" class="pill-tab" data-algo="FNV-1a">FNV-1a (32-bit)</button>
-          <button type="button" class="pill-tab" data-algo="v1-token">Reversible Token (v1)</button>
-          <button type="button" class="pill-tab" data-algo="v2-token">Structured Token (v2)</button>
-        </div>
-      </div>
-
-      <!-- Step 2: Select Fields & Mode -->
-      <div class="card-mono p-5 mb-5">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <label class="text-xs font-bold uppercase tracking-wider text-neutral-300">2. Select Values to Hash</label>
-          <div class="flex items-center gap-1.5" id="mode-pills">
-            <button type="button" class="pill-tab active" data-mode="1">1 Value</button>
-            <button type="button" class="pill-tab" data-mode="2">2 Values (Data + Salt/Key)</button>
-            <button type="button" class="pill-tab" data-mode="multi">Multiple Values</button>
-          </div>
-        </div>
-
-        <!-- Checkbox selection for active fields -->
-        <div class="flex flex-wrap items-center gap-4 py-2 border-y border-neutral-800 text-xs text-neutral-300">
-          <label class="inline-flex items-center gap-2 cursor-pointer select-none">
-            <input type="checkbox" id="check-field-1" checked disabled class="checkbox-mono" />
-            <span>Value 1 (Primary Data)</span>
-          </label>
-          <label class="inline-flex items-center gap-2 cursor-pointer select-none">
-            <input type="checkbox" id="check-field-2" class="checkbox-mono" />
-            <span>Value 2 (Salt / Key)</span>
-          </label>
-          <label class="inline-flex items-center gap-2 cursor-pointer select-none">
-            <input type="checkbox" id="check-field-3" class="checkbox-mono" />
-            <span>Value 3 (Extra Value)</span>
-          </label>
-        </div>
-
-        <!-- Combination strategy (shown when 2 or more values are active) -->
-        <div id="combine-wrap" class="mt-3.5 pt-1 hidden">
-          <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
-            <span class="text-neutral-400 font-semibold uppercase text-[11px]">Combine Method:</span>
-            <select id="combine-mode" class="input-mono !py-1 !px-2.5 !text-xs !w-auto">
-              <option value="salted">Salted: Value 1 + Value 2</option>
-              <option value="colon">Colon Separated: Value 1 : Value 2</option>
-              <option value="concat">Concatenated: Value 1 + Value 2 (No separator)</option>
-              <option value="newline">Newline Separated</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 3: Input Values -->
-      <div class="card-mono p-5 mb-5 space-y-4">
-        <div class="flex items-center justify-between">
-          <label class="text-xs font-bold uppercase tracking-wider text-neutral-300">3. Input Value(s)</label>
-          <div class="flex items-center gap-2">
-            <button type="button" id="btn-sample" class="btn-mono btn-mono-ghost !py-1 !px-2 text-xs">Load Sample</button>
-            <button type="button" id="btn-clear" class="btn-mono btn-mono-ghost !py-1 !px-2 text-xs">Clear</button>
-          </div>
-        </div>
-
-        <!-- Field 1 -->
-        <div id="field-wrap-1">
-          <div class="flex items-center justify-between mb-1 text-[11px] text-neutral-400">
-            <span class="font-bold text-neutral-300">VALUE 1: PRIMARY DATA / MESSAGE</span>
-            <span id="char-count-1">0 chars</span>
-          </div>
-          <textarea id="val-1" rows="3" class="input-mono resize-y" placeholder="Type or paste primary text to hash…"></textarea>
-        </div>
-
-        <!-- Field 2 -->
-        <div id="field-wrap-2" class="hidden">
-          <div class="flex items-center justify-between mb-1 text-[11px] text-neutral-400">
-            <span class="font-bold text-neutral-300">VALUE 2: SALT / SECRET KEY / SUFFIX</span>
-            <span id="char-count-2">0 chars</span>
-          </div>
-          <input type="text" id="val-2" class="input-mono" placeholder="Enter salt, secret key, or second value…" />
-        </div>
-
-        <!-- Field 3 -->
-        <div id="field-wrap-3" class="hidden">
-          <div class="flex items-center justify-between mb-1 text-[11px] text-neutral-400">
-            <span class="font-bold text-neutral-300">VALUE 3: EXTRA VALUE</span>
-            <span id="char-count-3">0 chars</span>
-          </div>
-          <input type="text" id="val-3" class="input-mono" placeholder="Enter third value…" />
-        </div>
-      </div>
-
-      <!-- Step 4: Output Hash -->
-      <div class="card-mono p-5 mb-5 border-neutral-700">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-bold uppercase tracking-wider text-white">Generated Hash</span>
-            <span id="hash-info-badge" class="badge-mono text-[10px]">SHA-256</span>
-          </div>
-          <div class="flex items-center gap-1 text-[11px] text-neutral-400 font-mono">
-            <span id="hash-length">0 chars</span>
-          </div>
-        </div>
-
-        <!-- Output display box -->
-        <div id="hash-output" class="hash-output-box min-h-[3.5rem] break-all select-all flex items-center">
-          <span class="text-neutral-500 font-normal">Hash will generate automatically as you type…</span>
-        </div>
-
-        <!-- Output actions toolbar -->
-        <div class="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t border-neutral-800">
-          <div class="flex items-center gap-2">
-            <button type="button" id="btn-case" class="btn-mono !py-1 !px-2.5 text-xs">UPPERCASE</button>
-            <button type="button" id="btn-format" class="btn-mono !py-1 !px-2.5 text-xs">HEX</button>
-          </div>
-          <button type="button" id="btn-copy" class="btn-mono btn-mono-primary !py-1.5 !px-4 text-xs font-bold">
-            Copy Hash
+      <!-- Category Navigation Tabs -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-2.5 mb-4 scrollbar-none" id="cat-tabs">
+        ${CATEGORIES.map((cat, idx) => `
+          <button type="button" class="cat-tab ${idx === 0 ? 'active' : ''}" data-cat="${cat.id}">
+            ${cat.name}
           </button>
-        </div>
+        `).join('')}
       </div>
 
-      <!-- Step 5: Verify / Compare Hash -->
-      <div class="card-mono p-5 mb-5">
-        <div class="flex items-center justify-between mb-2">
-          <label class="text-xs font-bold uppercase tracking-wider text-neutral-300">Verify / Compare Hash</label>
-          <span id="match-badge" class="badge-mono text-[10px] hidden"></span>
-        </div>
-        <input type="text" id="val-compare" class="input-mono text-xs" placeholder="Paste an expected hash here to compare against the output…" />
-      </div>
+      <!-- Sub-tool Pills Navigation -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-2.5 mb-6 scrollbar-none" id="subtool-tabs"></div>
 
-      <!-- Step 6: Universal Token Decoder / Dehash -->
-      <div class="card-mono p-5">
-        <div class="flex items-center justify-between mb-2">
-          <label class="text-xs font-bold uppercase tracking-wider text-neutral-300">Decode Reversible Token (v1 / v2 / .ovlicense)</label>
-          <button type="button" id="btn-decode-run" class="btn-mono !py-1 !px-2.5 text-xs">Decode Token</button>
-        </div>
-        <textarea id="token-decode-input" rows="2" class="input-mono text-xs resize-y" placeholder="Paste a v1$… or ov2s$… token or JSON license here to reverse it into original values…"></textarea>
-        <div id="token-decode-result" class="mt-3 p-3 bg-neutral-900 border border-neutral-800 rounded-lg text-xs font-mono hidden"></div>
-      </div>
+      <!-- Active Tool Workspace Card -->
+      <div id="tool-workspace"></div>
     </div>
     `;
   }
 
   global.OVPages = {
+    CATEGORIES,
     singlePage,
-    landing: singlePage,
-    dashboard: singlePage,
-    hashPlayground: singlePage,
-    about: singlePage,
   };
 })(window);

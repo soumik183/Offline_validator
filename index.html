@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#000000" />
-  <title>Offline Hash Engine — Local Cryptographic Hash Generator</title>
-  <meta name="description" content="Minimalist, 100% in-browser cryptographic hash generator. Select 1 or multiple values to hash using SHA-256, SHA-512, MD5, and custom tokens." />
+  <title>Offline Toolsuite — Multi-Format Encoder, Decoder, Hash & Utilities</title>
+  <meta name="description" content="100% offline, privacy-first developer utility suite. Identifiers, cryptographic hashing, multi-format encoding/decoding, date/time, random generators, text tools, and format converters." />
 
   <!-- Inline favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23ffffff'/><text x='12' y='17' font-family='monospace' font-size='14' font-weight='bold' fill='%23000000' text-anchor='middle'>#</text></svg>" />
@@ -48,18 +48,18 @@
 
   <!-- Minimalist Black & White Top Bar -->
   <nav class="nav-mono">
-    <div class="max-w-3xl mx-auto px-4">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6">
       <div class="flex items-center justify-between h-14">
         <a href="./" class="flex items-center gap-2 text-white hover:opacity-80 transition">
           <span class="w-6 h-6 rounded bg-white text-black font-extrabold flex items-center justify-center text-xs">#</span>
-          <span class="font-bold text-sm tracking-wider uppercase">OFFLINE HASH</span>
+          <span class="font-bold text-sm tracking-wider uppercase">OFFLINE SUITE</span>
         </a>
 
         <div class="flex items-center gap-3">
           <!-- Real-time Online / Offline status badge -->
           <div id="online-status" class="badge-mono text-[10px]" title="Browser Network Connectivity">
             <span id="online-status-dot" class="w-1.5 h-1.5 rounded-full bg-white"></span>
-            <span id="online-status-text">ONLINE</span>
+            <span id="online-status-text">OFFLINE READY</span>
           </div>
 
           <!-- Black & White theme toggle button -->
@@ -81,6 +81,7 @@
   <script src="js/hash.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/fileio.js"></script>
+  <script src="js/tools.js"></script>
   <script src="js/pages.js"></script>
   <script src="js/app.js"></script>
 </body>

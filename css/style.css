@@ -544,3 +544,30 @@ body {
 footer, .app-footer {
   display: none !important;
 }
+
+/* ---------- Calendar & Time Picker Inputs ---------- */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  background-color: var(--bg-1);
+  color: var(--text-1);
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(1);
+  opacity: 0.85;
+}
+
+[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="light"] input[type="time"]::-webkit-calendar-picker-indicator,
+[data-theme="light"] input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(0);
+}

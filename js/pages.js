@@ -28,7 +28,9 @@
               <option value="text">Text / Message</option>
               <option value="uuid">UUID (v4)</option>
               <option value="userid">User ID (usr_...)</option>
-              <option value="date">Date &amp; Time</option>
+              <option value="date">Date &amp; Time (Single) 📅</option>
+              <option value="daterange">Date to Date (Range) 📅</option>
+              <option value="timerange">Time to Time (Range) ⏰</option>
               <option value="number">Number</option>
               <option value="salt">Secret Key / Salt</option>
               <option value="json">JSON Data</option>

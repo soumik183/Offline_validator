@@ -2,7 +2,8 @@
  * app.js
  * Minimalist Multi-Type Encoder & Decoder Controller.
  * 100% Client-Side, Pure Black & White Theme.
- * Supports in-place type switching, date formatting, and details/examples.
+ * Supports in-place type switching, interactive calendar & time pickers,
+ * Date-to-Date ranges, Time-to-Time ranges, and details/examples.
  */
 (function () {
   'use strict';
@@ -37,14 +38,34 @@
       genLabel: '⚡ Generate User ID',
     },
     date: {
-      name: 'Date & Time',
+      name: 'Date & Time (Single)',
       placeholder: 'e.g. 2026-09-03T12:00:00Z',
-      details: 'Formatted date & time string or UNIX timestamp.',
+      details: 'Interactive calendar date & clock time or timestamp.',
       example: '2026-09-03T12:00:00Z',
       multiline: false,
       isDate: true,
-      generator: makeDateNow,
+      generator: (fmt) => makeDateNow(fmt || 'iso'),
       genLabel: '⚡ Set Current Time',
+    },
+    daterange: {
+      name: 'Date to Date (Range)',
+      placeholder: 'e.g. 2026-09-01 to 2026-09-10 (9 days)',
+      details: 'Calendar date interval from start date to end date.',
+      example: '2026-09-01 to 2026-09-10 (9 days)',
+      multiline: false,
+      isDateRange: true,
+      generator: () => formatDateRange(getCurrentYMD(), getPlusDaysYMD(7)),
+      genLabel: '⚡ +7 Days',
+    },
+    timerange: {
+      name: 'Time to Time (Range)',
+      placeholder: 'e.g. 09:00 to 17:00 (8 hours)',
+      details: 'Time-to-time interval or shift duration.',
+      example: '09:00 to 17:00 (8 hours)',
+      multiline: false,
+      isTimeRange: true,
+      generator: () => formatTimeRange('09:00', '17:00'),
+      genLabel: '⚡ 9-to-5 Shift',
     },
     number: {
       name: 'Number',
@@ -163,13 +184,27 @@
      ============================================================ */
   function addField(type = 'text', initialValue = '') {
     const def = TYPE_DEFS[type] || TYPE_DEFS.text;
+    const today = getCurrentYMD();
+    const plus7 = getPlusDaysYMD(7);
+
     const fieldObj = {
       id: nextFieldId++,
       type: type,
       customName: type === 'custom' ? 'Custom' : '',
       dateFormat: 'iso',
-      value: initialValue || (def.generator ? def.generator() : ''),
+      dateFrom: today,
+      dateTo: plus7,
+      timeFrom: '09:00',
+      timeTo: '17:00',
+      value: initialValue || (def.generator ? def.generator(type === 'date' ? 'iso' : undefined) : ''),
     };
+
+    if (type === 'daterange' && !initialValue) {
+      fieldObj.value = formatDateRange(today, plus7);
+    } else if (type === 'timerange' && !initialValue) {
+      fieldObj.value = formatTimeRange('09:00', '17:00');
+    }
+
     fields.push(fieldObj);
     renderFieldsList();
   }
@@ -189,12 +224,19 @@
     f.type = newType;
     const def = TYPE_DEFS[newType] || TYPE_DEFS.text;
 
-    // Provide default generated value if field is currently blank
-    if (!f.value && def.generator) {
-      f.value = def.generator(f.dateFormat);
-    }
-    if (newType === 'date' && !f.value) {
-      f.value = formatDateByType(new Date(), f.dateFormat || 'iso');
+    if (newType === 'date') {
+      f.dateFormat = f.dateFormat || 'iso';
+      f.value = formatDateByType(new Date(), f.dateFormat);
+    } else if (newType === 'daterange') {
+      f.dateFrom = f.dateFrom || getCurrentYMD();
+      f.dateTo = f.dateTo || getPlusDaysYMD(7);
+      f.value = formatDateRange(f.dateFrom, f.dateTo);
+    } else if (newType === 'timerange') {
+      f.timeFrom = f.timeFrom || '09:00';
+      f.timeTo = f.timeTo || '17:00';
+      f.value = formatTimeRange(f.timeFrom, f.timeTo);
+    } else if (def.generator && !f.value) {
+      f.value = def.generator();
     }
 
     renderFieldsList();
@@ -214,11 +256,13 @@
       const def = TYPE_DEFS[f.type] || TYPE_DEFS.text;
       const hasGen = typeof def.generator === 'function';
       const isDate = f.type === 'date';
+      const isDateRange = f.type === 'daterange';
+      const isTimeRange = f.type === 'timerange';
       const isCustom = f.type === 'custom';
 
       return `
         <div class="p-3.5 sm:p-4 bg-neutral-900/60 border border-neutral-800 rounded-lg space-y-2.5 transition-all" data-field-id="${f.id}">
-          <!-- Top Row: Field Number + Type Dropdown + Action Buttons -->
+          <!-- Top Row: Field Number + In-place Type Selector + Actions -->
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="flex flex-wrap items-center gap-2">
               <span class="badge-mono text-[10px] !bg-neutral-800 font-bold">Field #${idx + 1}</span>
@@ -228,7 +272,9 @@
                 <option value="text" ${f.type === 'text' ? 'selected' : ''}>Text / Message</option>
                 <option value="uuid" ${f.type === 'uuid' ? 'selected' : ''}>UUID (v4)</option>
                 <option value="userid" ${f.type === 'userid' ? 'selected' : ''}>User ID (usr_...)</option>
-                <option value="date" ${f.type === 'date' ? 'selected' : ''}>Date &amp; Time</option>
+                <option value="date" ${f.type === 'date' ? 'selected' : ''}>Date &amp; Time (Single) 📅</option>
+                <option value="daterange" ${f.type === 'daterange' ? 'selected' : ''}>Date to Date (Range) 📅</option>
+                <option value="timerange" ${f.type === 'timerange' ? 'selected' : ''}>Time to Time (Range) ⏰</option>
                 <option value="number" ${f.type === 'number' ? 'selected' : ''}>Number</option>
                 <option value="salt" ${f.type === 'salt' ? 'selected' : ''}>Secret Key / Salt</option>
                 <option value="json" ${f.type === 'json' ? 'selected' : ''}>JSON Data</option>
@@ -254,20 +300,74 @@
             </div>
           </div>
 
-          <!-- When Date & Time is selected: Show Date & Time Format Selector Bar -->
+          <!-- 1. Single Date & Time: Calendar & Clock Picker + Format Selector -->
           ${isDate ? `
-            <div class="flex flex-wrap items-center gap-2 p-2 bg-black/60 border border-neutral-800 rounded text-xs">
-              <span class="text-neutral-400 font-bold uppercase text-[10px]">Date Format:</span>
-              <select class="field-date-format input-mono !py-0.5 !px-2 !text-[11px] !w-auto font-mono cursor-pointer" data-field-id="${f.id}" title="Select date/time representation format">
-                <option value="iso" ${f.dateFormat === 'iso' ? 'selected' : ''}>ISO 8601 (YYYY-MM-DDTHH:mm:ssZ)</option>
-                <option value="dateonly" ${f.dateFormat === 'dateonly' ? 'selected' : ''}>Date Only (YYYY-MM-DD)</option>
-                <option value="human" ${f.dateFormat === 'human' ? 'selected' : ''}>Human (DD/MM/YYYY HH:mm:ss)</option>
-                <option value="unix" ${f.dateFormat === 'unix' ? 'selected' : ''}>Unix Seconds (10-digit)</option>
-                <option value="unix_ms" ${f.dateFormat === 'unix_ms' ? 'selected' : ''}>Unix Milliseconds (13-digit)</option>
-              </select>
-              <button type="button" class="btn-date-now btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}" title="Update to current time in chosen format">
-                ⚡ Set Now
-              </button>
+            <div class="p-2.5 bg-black/60 border border-neutral-800 rounded space-y-2 text-xs">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-neutral-400 font-bold uppercase text-[10px]">📅 Calendar &amp; Time Picker:</span>
+                  <input type="datetime-local" class="field-dt-calendar input-mono !py-1 !px-2 !text-xs !w-auto cursor-pointer" data-field-id="${f.id}" value="${getIsoForDateTimeLocal(f.value)}" title="Click to open interactive calendar and clock" />
+                </div>
+                <button type="button" class="btn-date-now btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}" title="Set to current date and time">
+                  ⚡ Set Current Time
+                </button>
+              </div>
+              <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-neutral-800/80">
+                <span class="text-neutral-400 font-bold uppercase text-[10px]">Format:</span>
+                <select class="field-date-format input-mono !py-0.5 !px-2 !text-[11px] !w-auto font-mono cursor-pointer" data-field-id="${f.id}" title="Select date/time representation format">
+                  <option value="iso" ${f.dateFormat === 'iso' ? 'selected' : ''}>ISO 8601 (YYYY-MM-DDTHH:mm:ssZ)</option>
+                  <option value="dateonly" ${f.dateFormat === 'dateonly' ? 'selected' : ''}>Date Only (YYYY-MM-DD)</option>
+                  <option value="human" ${f.dateFormat === 'human' ? 'selected' : ''}>Human (DD/MM/YYYY HH:mm:ss)</option>
+                  <option value="unix" ${f.dateFormat === 'unix' ? 'selected' : ''}>Unix Seconds (10-digit)</option>
+                  <option value="unix_ms" ${f.dateFormat === 'unix_ms' ? 'selected' : ''}>Unix Milliseconds (13-digit)</option>
+                </select>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- 2. Date to Date (Range): Start Calendar to End Calendar -->
+          ${isDateRange ? `
+            <div class="p-2.5 bg-black/60 border border-neutral-800 rounded space-y-2 text-xs">
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-neutral-400 font-bold uppercase text-[10px]">📅 From:</span>
+                  <input type="date" class="field-dr-from input-mono !py-1 !px-2 !text-xs !w-auto cursor-pointer" data-field-id="${f.id}" value="${f.dateFrom || getCurrentYMD()}" title="Start Date Calendar" />
+                </div>
+                <span class="text-neutral-500 font-bold">→</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-neutral-400 font-bold uppercase text-[10px]">📅 To:</span>
+                  <input type="date" class="field-dr-to input-mono !py-1 !px-2 !text-xs !w-auto cursor-pointer" data-field-id="${f.id}" value="${f.dateTo || getPlusDaysYMD(7)}" title="End Date Calendar" />
+                </div>
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-neutral-800/80">
+                <span class="text-neutral-400 text-[10px] uppercase font-bold">Quick Presets:</span>
+                <button type="button" class="btn-dr-preset btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}" data-days="7">+7 Days</button>
+                <button type="button" class="btn-dr-preset btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}" data-days="14">+14 Days</button>
+                <button type="button" class="btn-dr-preset btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}" data-days="30">+30 Days</button>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- 3. Time to Time (Range): Start Clock to End Clock -->
+          ${isTimeRange ? `
+            <div class="p-2.5 bg-black/60 border border-neutral-800 rounded space-y-2 text-xs">
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-neutral-400 font-bold uppercase text-[10px]">⏰ Start Time:</span>
+                  <input type="time" class="field-tr-from input-mono !py-1 !px-2 !text-xs !w-auto cursor-pointer" data-field-id="${f.id}" value="${f.timeFrom || '09:00'}" title="Start Time Clock" />
+                </div>
+                <span class="text-neutral-500 font-bold">→</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-neutral-400 font-bold uppercase text-[10px]">⏰ End Time:</span>
+                  <input type="time" class="field-tr-to input-mono !py-1 !px-2 !text-xs !w-auto cursor-pointer" data-field-id="${f.id}" value="${f.timeTo || '17:00'}" title="End Time Clock" />
+                </div>
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-neutral-800/80">
+                <span class="text-neutral-400 text-[10px] uppercase font-bold">Quick Presets:</span>
+                <button type="button" class="btn-tr-preset btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}" data-from="09:00" data-to="17:00">9-to-5 Shift (8h)</button>
+                <button type="button" class="btn-tr-preset btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}" data-from="08:00" data-to="12:00">Morning (4h)</button>
+                <button type="button" class="btn-tr-preset btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}" data-from="13:00" data-to="21:00">Evening (8h)</button>
+              </div>
             </div>
           ` : ''}
 
@@ -315,7 +415,21 @@
       });
     });
 
-    // Attach listeners to date format selector
+    // 1. Single Date Calendar picker change listener
+    container.querySelectorAll('.field-dt-calendar').forEach(inp => {
+      inp.addEventListener('change', (e) => {
+        const id = +e.target.dataset.fieldId;
+        const f = fields.find(item => item.id === id);
+        if (f && e.target.value) {
+          f.value = formatDateByType(new Date(e.target.value), f.dateFormat || 'iso');
+          const valInp = container.querySelector(`.input-field-val[data-field-id="${id}"]`);
+          if (valInp) valInp.value = f.value;
+          toast('CALENDAR PICKED', f.value.slice(0, 24));
+        }
+      });
+    });
+
+    // Single Date format selector
     container.querySelectorAll('.field-date-format').forEach(sel => {
       sel.addEventListener('change', (e) => {
         const id = +e.target.dataset.fieldId;
@@ -324,26 +438,92 @@
           f.dateFormat = e.target.value;
           f.value = formatDateByType(new Date(), f.dateFormat);
           renderFieldsList();
-          toast('DATE FORMAT', `Updated to ${e.target.value.toUpperCase()}.`);
+          toast('DATE FORMAT', `Format: ${e.target.value.toUpperCase()}`);
         }
       });
     });
 
-    // Attach listeners to date 'Set Now' buttons
+    // Single Date 'Set Current Time' button
     container.querySelectorAll('.btn-date-now').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const id = +e.target.dataset.fieldId;
         const f = fields.find(item => item.id === id);
         if (f) {
           f.value = formatDateByType(new Date(), f.dateFormat || 'iso');
-          const inp = container.querySelector(`.input-field-val[data-field-id="${id}"]`);
-          if (inp) inp.value = f.value;
-          toast('TIME SET', 'Filled current date/time.');
+          renderFieldsList();
+          toast('TIME SET', 'Updated to current time.');
         }
       });
     });
 
-    // Attach listeners to generator buttons
+    // 2. Date to Date Range calendar pickers
+    container.querySelectorAll('.field-dr-from, .field-dr-to').forEach(inp => {
+      inp.addEventListener('change', (e) => {
+        const id = +e.target.dataset.fieldId;
+        const f = fields.find(item => item.id === id);
+        if (f) {
+          const fromEl = container.querySelector(`.field-dr-from[data-field-id="${id}"]`);
+          const toEl = container.querySelector(`.field-dr-to[data-field-id="${id}"]`);
+          f.dateFrom = fromEl?.value || getCurrentYMD();
+          f.dateTo = toEl?.value || getPlusDaysYMD(7);
+          f.value = formatDateRange(f.dateFrom, f.dateTo);
+          const valInp = container.querySelector(`.input-field-val[data-field-id="${id}"]`);
+          if (valInp) valInp.value = f.value;
+        }
+      });
+    });
+
+    // Date Range Presets
+    container.querySelectorAll('.btn-dr-preset').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = +e.target.dataset.fieldId;
+        const days = +e.target.dataset.days || 7;
+        const f = fields.find(item => item.id === id);
+        if (f) {
+          f.dateFrom = getCurrentYMD();
+          f.dateTo = getPlusDaysYMD(days);
+          f.value = formatDateRange(f.dateFrom, f.dateTo);
+          renderFieldsList();
+          toast('PRESET APPLIED', `+${days} days range.`);
+        }
+      });
+    });
+
+    // 3. Time to Time Range pickers
+    container.querySelectorAll('.field-tr-from, .field-tr-to').forEach(inp => {
+      inp.addEventListener('change', (e) => {
+        const id = +e.target.dataset.fieldId;
+        const f = fields.find(item => item.id === id);
+        if (f) {
+          const fromEl = container.querySelector(`.field-tr-from[data-field-id="${id}"]`);
+          const toEl = container.querySelector(`.field-tr-to[data-field-id="${id}"]`);
+          f.timeFrom = fromEl?.value || '09:00';
+          f.timeTo = toEl?.value || '17:00';
+          f.value = formatTimeRange(f.timeFrom, f.timeTo);
+          const valInp = container.querySelector(`.input-field-val[data-field-id="${id}"]`);
+          if (valInp) valInp.value = f.value;
+        }
+      });
+    });
+
+    // Time Range Presets
+    container.querySelectorAll('.btn-tr-preset').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = +e.target.dataset.fieldId;
+        const from = e.target.dataset.from;
+        const to = e.target.dataset.to;
+        const f = fields.find(item => item.id === id);
+        if (f) {
+          f.timeFrom = from;
+          f.timeTo = to;
+          f.value = formatTimeRange(from, to);
+          renderFieldsList();
+          toast('TIME RANGE', `${from} → ${to}`);
+        }
+      });
+    });
+
+    // Generator buttons
     container.querySelectorAll('.btn-gen-field').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const id = +e.target.dataset.fieldId;
@@ -358,7 +538,7 @@
       });
     });
 
-    // Attach listeners to remove buttons
+    // Remove buttons
     container.querySelectorAll('.btn-rem-field').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const id = +e.target.dataset.fieldId;
@@ -682,6 +862,57 @@
       unix_ms: '1788414136000',
     };
     return map[fmt] || map.iso;
+  }
+
+  function getCurrentYMD() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function getPlusDaysYMD(days = 7) {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function getIsoForDateTimeLocal(v) {
+    try {
+      const d = v ? new Date(v) : new Date();
+      if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 16);
+      const tzOffset = d.getTimezoneOffset() * 60000;
+      return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+    } catch (_) {
+      return new Date().toISOString().slice(0, 16);
+    }
+  }
+
+  function formatDateRange(fromStr, toStr) {
+    if (!fromStr || !toStr) return '';
+    const d1 = new Date(fromStr);
+    const d2 = new Date(toStr);
+    const diffMs = d2 - d1;
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    const dayLabel = diffDays === 1 ? '1 day' : `${diffDays} days`;
+    return `${fromStr} to ${toStr} (${dayLabel})`;
+  }
+
+  function formatTimeRange(startStr, endStr) {
+    if (!startStr || !endStr) return '';
+    const [h1, m1] = startStr.split(':').map(Number);
+    const [h2, m2] = endStr.split(':').map(Number);
+    let mins = (h2 * 60 + m2) - (h1 * 60 + m1);
+    if (mins < 0) mins += 24 * 60; // overnight span
+    const hrs = Math.floor(mins / 60);
+    const remMins = mins % 60;
+    const durLabel = hrs > 0 ? `${hrs}h${remMins > 0 ? ` ${remMins}m` : ''}` : `${remMins}m`;
+    return `${startStr} to ${endStr} (${durLabel})`;
+  }
+
+  function makeSampleDateRange() {
+    return formatDateRange(getCurrentYMD(), getPlusDaysYMD(7));
+  }
+
+  function makeSampleTimeRange() {
+    return formatTimeRange('09:00', '17:00');
   }
 
   /* ============================================================

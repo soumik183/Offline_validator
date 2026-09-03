@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="100%" stop-color="#09090b"/>
+    </linearGradient>
+
+    <!-- Metallic shackle gradient -->
+    <linearGradient id="shackleGrad" x1="20" y1="10" x2="44" y2="28" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#a1a1aa"/>
+      <stop offset="100%" stop-color="#71717a"/>
+    </linearGradient>
+
+    <!-- Lock body gradient -->
+    <linearGradient id="bodyGrad" x1="14" y1="26" x2="50" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#27272a"/>
+      <stop offset="50%" stop-color="#18181b"/>
+      <stop offset="100%" stop-color="#09090b"/>
+    </linearGradient>
+
+    <!-- Glowing accent gradient -->
+    <linearGradient id="accentGrad" x1="28" y1="34" x2="36" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e4e4e7"/>
+    </linearGradient>
+
+    <!-- Drop shadow for 3D realism -->
+    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Outer Rounded Badge -->
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#bgGrad)" stroke="#ffffff" stroke-opacity="0.22" stroke-width="1.5"/>
+
+  <!-- Subtle inner ambient rim -->
+  <rect x="3.5" y="3.5" width="57" height="57" rx="13.5" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
+
+  <!-- Shackle (Arch) -->
+  <path d="M22 28V19C22 13.477 26.477 9 32 9C37.523 9 42 13.477 42 19V28" 
+        stroke="url(#shackleGrad)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#dropShadow)"/>
+
+  <!-- Lock Body -->
+  <rect x="14" y="26" width="36" height="28" rx="7" fill="url(#bodyGrad)" stroke="#ffffff" stroke-opacity="0.45" stroke-width="1.5" filter="url(#dropShadow)"/>
+
+  <!-- Top highlight line on lock body -->
+  <line x1="19" y1="28" x2="45" y2="28" stroke="#ffffff" stroke-opacity="0.35" stroke-linecap="round"/>
+
+  <!-- Cryptographic Keyhole & Nodes -->
+  <!-- Keyhole Top Circle -->
+  <circle cx="32" cy="37" r="4" fill="url(#accentGrad)"/>
+  <!-- Keyhole Bottom Stem -->
+  <path d="M30.4 39.5L29 46H35L33.6 39.5Z" fill="url(#accentGrad)"/>
+
+  <!-- Codec Data Stream Accents (Left & Right Binary Nodes) -->
+  <!-- Left incoming node -->
+  <circle cx="21" cy="40" r="1.75" fill="#ffffff" fill-opacity="0.8"/>
+  <path d="M21 34V37M21 43V46" stroke="#ffffff" stroke-opacity="0.4" stroke-width="1" stroke-linecap="round"/>
+
+  <!-- Right outgoing node -->
+  <circle cx="43" cy="40" r="1.75" fill="#ffffff" fill-opacity="0.8"/>
+  <path d="M43 34V37M43 43V46" stroke="#ffffff" stroke-opacity="0.4" stroke-width="1" stroke-linecap="round"/>
+</svg>

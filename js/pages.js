@@ -1,157 +1,141 @@
 /**
  * pages.js
- * Minimalist Black & White Multi-Format Suite Layout & Tool Templates.
- * 100% Client-Side.
+ * Minimalist Black & White Multi-Type Encoder & Decoder Layout.
+ * 100% Client-Side. Clean & Responsive.
  */
 (function (global) {
   'use strict';
 
-  // Tool categories and subtools configuration
-  const CATEGORIES = [
-    {
-      id: 'identifiers',
-      name: '🧬 IDENTIFIERS',
-      tools: [
-        { id: 'uuid', name: 'UUID Generator', desc: 'Generate RFC 4122 v4, v1, or Nil UUIDs' },
-        { id: 'userid', name: 'User ID Generator', desc: 'Generate custom prefixed user / entity IDs' },
-        { id: 'randomid', name: 'Random ID', desc: 'Cryptographically random alphanumeric tokens' },
-        { id: 'nanoid', name: 'Nano ID', desc: 'Compact URL-friendly collision-resistant IDs' },
-        { id: 'customid', name: 'Custom ID', desc: 'Pattern template-based ID generation' },
-      ]
-    },
-    {
-      id: 'hashing',
-      name: '🔐 OUR CUSTOM CODEC',
-      tools: [
-        { id: 'v1encode', name: 'Token Encoder (v1)', desc: 'Encode 1 or 2 values (Data + Salt) into our reversible token' },
-        { id: 'v1decode', name: 'Token Decoder (v1)', desc: 'Decode our v1 token back to original Data and Salt' },
-        { id: 'v2license', name: 'Structured License (v2)', desc: 'Generate tamper-evident 8-field license token & .ovlicense' },
-        { id: 'v2decode', name: 'License Decoder (v2)', desc: 'Decode ov2s$ token or inspect .ovlicense / .ovstruct file' },
-        { id: 'verifier', name: 'Token Verifier', desc: 'Verify token integrity and detect tampering via 32-bit checksum' },
-      ]
-    },
-    {
-      id: 'encoding',
-      name: '🔄 ENCODING',
-      tools: [
-        { id: 'base64', name: 'Base64', desc: 'UTF-8 safe Base64 encoder & decoder' },
-        { id: 'url', name: 'URL', desc: 'URL and URI Component encoder & decoder' },
-        { id: 'hex', name: 'Hex', desc: 'Text to Hexadecimal byte encoder & decoder' },
-        { id: 'binary', name: 'Binary', desc: 'Text to 8-bit Binary encoder & decoder' },
-        { id: 'html', name: 'HTML Entities', desc: 'HTML escape & unescape entity codec' },
-      ]
-    },
-    {
-      id: 'datetime',
-      name: '📅 DATE & TIME',
-      tools: [
-        { id: 'dateconverter', name: 'Date Converter', desc: 'Convert ISO 8601, UTC, Local, and Unix timestamps' },
-        { id: 'timestampconverter', name: 'Timestamp Converter', desc: 'Unix seconds & milliseconds to human date' },
-        { id: 'timezoneconverter', name: 'Timezone Converter', desc: 'Live multi-city global timezone comparison' },
-        { id: 'dateformatter', name: 'Date Formatter', desc: 'Format dates with customizable patterns' },
-      ]
-    },
-    {
-      id: 'random',
-      name: '🎲 RANDOM',
-      tools: [
-        { id: 'number', name: 'Number', desc: 'Cryptographically secure random numbers' },
-        { id: 'string', name: 'String', desc: 'Random strings with custom charset filters' },
-        { id: 'uuid', name: 'UUID', desc: 'One-click random UUID v4 generator' },
-        { id: 'color', name: 'Color', desc: 'Random colors in HEX, RGB, and HSL' },
-        { id: 'customid', name: 'Custom ID', desc: 'Random template-based identifiers' },
-      ]
-    },
-    {
-      id: 'text',
-      name: '🔤 TEXT',
-      tools: [
-        { id: 'caseconverter', name: 'Case Converter', desc: 'Convert to camel, snake, kebab, UPPER, Title, etc.' },
-        { id: 'sluggenerator', name: 'Slug Generator', desc: 'Generate clean URL slugs from text' },
-        { id: 'textcounter', name: 'Text Counter', desc: 'Words, characters, lines, bytes, and reading time' },
-        { id: 'reversetext', name: 'Reverse Text', desc: 'Reverse by characters, words, or lines' },
-        { id: 'removeduplicates', name: 'Remove Duplicate Lines', desc: 'Deduplicate, sort, and trim lines' },
-      ]
-    },
-    {
-      id: 'converters',
-      name: '🔢 CONVERTERS',
-      tools: [
-        { id: 'numberbase', name: 'Number Base', desc: 'Binary, Octal, Decimal, and Hexadecimal conversion' },
-        { id: 'jsonformatter', name: 'JSON Formatter', desc: 'Beautify, minify, and validate JSON syntax' },
-        { id: 'jsonyaml', name: 'JSON ↔ YAML', desc: 'Bidirectional JSON and YAML converter' },
-        { id: 'csvjson', name: 'CSV ↔ JSON', desc: 'Bidirectional CSV and JSON table converter' },
-      ]
-    },
-  ];
-
   function singlePage() {
     return `
-    <div class="main-wrapper py-5 sm:py-8">
-      <!-- Minimalist Header -->
-      <div class="mb-5 border-b border-neutral-800 pb-4">
-        <div class="flex items-center justify-between gap-4 mb-2">
-          <div class="inline-flex items-center gap-2">
-            <span class="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></span>
-            <span class="text-xs font-bold tracking-widest uppercase text-neutral-400">OFFLINE MULTI-FORMAT SUITE</span>
+    <div class="max-w-3xl mx-auto px-3 sm:px-6 py-6 sm:py-8 space-y-6">
+
+      <!-- ============================================================
+           CARD 1: ENCODER CARD
+           ============================================================ -->
+      <div class="card-mono p-4 sm:p-6 space-y-5">
+        <!-- Encoder Header & Type Selector -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-800 pb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-white"></span>
+            <h2 class="text-sm font-extrabold uppercase tracking-wider text-white">ENCODER</h2>
+            <span id="fields-badge-cnt" class="badge-mono text-[10px]">1 TYPE SELECTED</span>
           </div>
-          <span class="badge-mono text-[10px]">100% IN-BROWSER · ZERO SERVERS</span>
+
+          <!-- Type Selector + Add Button -->
+          <div class="flex items-center gap-2">
+            <select id="sel-add-type" class="input-mono !py-1.5 !px-2.5 !text-xs !w-auto font-semibold cursor-pointer">
+              <option value="text">Text / Message</option>
+              <option value="uuid">UUID (v4)</option>
+              <option value="userid">User ID (usr_...)</option>
+              <option value="date">Date &amp; Time</option>
+              <option value="number">Number</option>
+              <option value="salt">Secret Key / Salt</option>
+              <option value="json">JSON Data</option>
+            </select>
+            <button type="button" id="btn-add-type" class="btn-mono btn-mono-primary !py-1.5 !px-3 text-xs font-bold flex items-center gap-1">
+              <span>+ Add Type</span>
+            </button>
+          </div>
         </div>
-        <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white mt-1">Developer Utility Suite</h1>
-        <p class="text-xs sm:text-sm text-neutral-400 mt-1">Multi-format encoder, decoder, proprietary codec, date utilities, random generators, and format converters.</p>
-      </div>
 
-      <!-- Quick Search & Filter Bar -->
-      <div class="relative mb-3">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutral-500">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <!-- Dynamic Fields Container -->
+        <div id="encoder-fields-list" class="space-y-4">
+          <!-- Dynamically populated field rows -->
         </div>
-        <input type="text" id="tool-search" class="search-mono" placeholder="Quick search all 29+ tools (e.g. UUID, Base64, Token, Timestamp, YAML, JSON, Slug...)" autocomplete="off" />
-        <div id="search-dropdown" class="hidden absolute top-full left-0 right-0 z-50 mt-1 bg-neutral-900 border border-neutral-700 rounded-lg shadow-2xl max-h-64 overflow-y-auto font-mono text-xs"></div>
-      </div>
 
-      <!-- Quick Shortcut Chips -->
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-4 scrollbar-none" id="quick-chips">
-        <span class="text-[10px] text-neutral-500 uppercase font-bold tracking-wider mr-1 hidden sm:inline">Shortcuts:</span>
-        <button type="button" class="quick-chip" data-goto-cat="identifiers" data-goto-tool="uuid">UUID</button>
-        <button type="button" class="quick-chip" data-goto-cat="hashing" data-goto-tool="v1encode">Token Codec</button>
-        <button type="button" class="quick-chip" data-goto-cat="encoding" data-goto-tool="base64">Base64</button>
-        <button type="button" class="quick-chip" data-goto-cat="converters" data-goto-tool="jsonformatter">JSON Formatter</button>
-        <button type="button" class="quick-chip" data-goto-cat="converters" data-goto-tool="jsonyaml">JSON ↔ YAML</button>
-        <button type="button" class="quick-chip" data-goto-cat="datetime" data-goto-tool="timestampconverter">Timestamp</button>
-        <button type="button" class="quick-chip" data-goto-cat="text" data-goto-tool="caseconverter">Case Converter</button>
-      </div>
+        <!-- Optional Secret Key / Salt -->
+        <div class="pt-2 border-t border-neutral-800">
+          <label class="block text-[11px] font-bold text-neutral-400 uppercase mb-1">
+            Secret Key / Salt <span class="text-neutral-500 font-normal">(Optional — used to encrypt/lock the token)</span>
+          </label>
+          <input type="text" id="encoder-secret-key" class="input-mono text-xs font-mono" placeholder="Optional password or secret salt..." />
+        </div>
 
-      <!-- Mobile Category Dropdown (visible only on mobile) -->
-      <div class="sm:hidden mb-3">
-        <label for="mobile-cat-select" class="block text-[11px] font-bold text-neutral-400 uppercase mb-1">Select Category:</label>
-        <select id="mobile-cat-select" class="input-mono !py-2 text-xs font-bold bg-neutral-900">
-          ${CATEGORIES.map(cat => `
-            <option value="${cat.id}">${cat.name}</option>
-          `).join('')}
-        </select>
-      </div>
-
-      <!-- Desktop Category Navigation Tabs -->
-      <div class="hidden sm:flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 scrollbar-none" id="cat-tabs">
-        ${CATEGORIES.map((cat, idx) => `
-          <button type="button" class="cat-tab ${idx === 0 ? 'active' : ''}" data-cat="${cat.id}">
-            ${cat.name}
+        <!-- Encode Action Buttons -->
+        <div class="flex items-center gap-2 pt-1">
+          <button type="button" id="btn-run-encode" class="btn-mono btn-mono-primary !py-2.5 flex-1 text-xs font-bold tracking-wider uppercase">
+            <span>🔒 Encode Token</span>
           </button>
-        `).join('')}
+          <button type="button" id="btn-clear-encoder" class="btn-mono !py-2.5 text-xs text-neutral-400 hover:text-white" title="Reset all fields">
+            <span>✕ Reset</span>
+          </button>
+        </div>
+
+        <!-- Encoded Output Result Box -->
+        <div id="encoder-output-section" class="hidden space-y-2 pt-4 border-t border-neutral-800">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-white">Generated Encoded Output</span>
+              <span id="encoder-stats-badge" class="badge-mono text-[10px]"></span>
+            </div>
+            <button type="button" id="btn-copy-encoded" class="btn-mono btn-mono-primary !py-1 !px-3 text-xs font-bold">
+              <span>Copy Output</span>
+            </button>
+          </div>
+          <textarea id="encoder-output-text" rows="3" readonly class="hash-output-box text-xs resize-y w-full font-mono"></textarea>
+        </div>
       </div>
 
-      <!-- Sub-tool Pills Navigation -->
-      <div class="flex flex-wrap items-center gap-1.5 pb-2 mb-5" id="subtool-tabs"></div>
+      <!-- ============================================================
+           CARD 2: DECODER CARD
+           ============================================================ -->
+      <div class="card-mono p-4 sm:p-6 space-y-5">
+        <!-- Decoder Header -->
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-white"></span>
+            <h2 class="text-sm font-extrabold uppercase tracking-wider text-white">DECODER</h2>
+          </div>
+          <span class="badge-mono text-[10px]">REVERSE TOKEN &amp; DETECT TYPES</span>
+        </div>
 
-      <!-- Active Tool Workspace Card -->
-      <div id="tool-workspace"></div>
+        <!-- Encoded Text Input -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-[11px] font-bold text-neutral-300 uppercase">Paste Encoded Token</label>
+            <button type="button" id="btn-paste-decoder" class="btn-mono !py-0.5 !px-2 text-[10px]">Paste from Clipboard</button>
+          </div>
+          <textarea id="decoder-input-text" rows="3" class="input-mono text-xs font-mono resize-y" placeholder="Paste v1$... token here to decode and extract types &amp; values..."></textarea>
+        </div>
+
+        <!-- Optional Secret Key / Salt for Decoding -->
+        <div>
+          <label class="block text-[11px] font-bold text-neutral-400 uppercase mb-1">
+            Secret Key / Salt <span class="text-neutral-500 font-normal">(Leave empty if no custom key was used)</span>
+          </label>
+          <input type="text" id="decoder-secret-key" class="input-mono text-xs font-mono" placeholder="Enter salt/key if the token was locked..." />
+        </div>
+
+        <!-- Decode Action Buttons -->
+        <div class="flex items-center gap-2">
+          <button type="button" id="btn-run-decode" class="btn-mono btn-mono-primary !py-2.5 flex-1 text-xs font-bold tracking-wider uppercase">
+            <span>🔓 Decode Token</span>
+          </button>
+          <button type="button" id="btn-clear-decoder" class="btn-mono !py-2.5 text-xs text-neutral-400 hover:text-white">
+            <span>✕ Clear</span>
+          </button>
+        </div>
+
+        <!-- Decoded Output Details -->
+        <div id="decoder-output-section" class="hidden space-y-3 pt-4 border-t border-neutral-800">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-white uppercase tracking-wider" id="decoder-summary-title">DECODED RESULTS</span>
+            <span id="decoder-checksum-badge" class="badge-mono text-[10px]">FNV-1a Verified ✓</span>
+          </div>
+
+          <!-- Decoded Field List -->
+          <div id="decoder-fields-list" class="space-y-3">
+            <!-- Rendered list of decoded types and values -->
+          </div>
+        </div>
+      </div>
+
     </div>
     `;
   }
 
   global.OVPages = {
-    CATEGORIES,
     singlePage,
   };
 })(window);

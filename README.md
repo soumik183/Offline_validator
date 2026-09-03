@@ -1,67 +1,42 @@
-# 🛠️ Offline Developer Suite — Multi-Format Encoder, Decoder & Utilities
+# 🔐 Offline Multi-Type Encoder & Decoder Suite
 
-> **A 100% client-side, privacy-first developer utility suite with a minimalist Black & White theme.**  
+> **A 100% client-side, privacy-first multi-type encoder and decoder with a minimalist Black & White theme.**  
 > Zero server roundtrips, zero telemetry, zero build steps.  
 > Runs locally in your browser and deploys out-of-the-box to **GitHub Pages**.
 
 ---
 
-## 📑 Complete Tool Catalog
+## 🎯 Clean 2-Card Architecture
 
-### 🧬 IDENTIFIERS
-- **UUID Generator**: Generate RFC 4122 v4 (random), v1 (timestamp), or Nil UUIDs. Options for uppercase/lowercase, hyphens/no-hyphens, and batch generation (1 to 25).
-- **User ID Generator**: Generate custom-prefixed entity IDs (e.g. `usr_8f3a2b1c`, `cust_...`, `org_...`) with selectable charsets (Alphanumeric Base62, Hexadecimal, Digits, Base32).
-- **Random ID**: Fast cryptographically secure random tokens with custom lengths and charsets.
-- **Nano ID**: Compact, URL-friendly collision-resistant IDs with custom alphabet and size configuration.
-- **Custom ID**: Pattern/template-based generator (e.g. `PROD-####-????-@@@@` where `#` = digit, `?` = letter, `@` = alphanumeric).
+### 1. 🔒 Card 1: Dynamic Multi-Type Encoder
+- **Type Selector**: Select any type (`Text / Message`, `UUID`, `User ID`, `Date & Time`, `Number`, `Secret Key / Salt`, `JSON Data`).
+- **`+ Add Type` Button**: Add 1, 2, 3, or more fields dynamically into a single bundle.
+- **Type Generators**:
+  - `⚡ Generate UUID`: Cryptographically secure RFC 4122 v4 UUID.
+  - `⚡ Generate User ID`: Random `usr_` entity identifier.
+  - `⚡ Set Current Time`: Instant ISO 8601 current timestamp.
+  - `⚡ Random Number`: 6-digit random number.
+  - `⚡ Sample Data`: Quick realistic test data.
+- **Optional Secret Key / Salt**: Protect or password-lock the generated token.
+- **`Encode Token`**: Compiles all selected types and values into a single reversible, tamper-evident stream token with embedded FNV-1a checksum.
+- **1-Click Copy**: Animated copy button with instant feedback.
 
-### 🔐 OUR CUSTOM CODEC (OUR OWN MADE ENCODER & DECODER SYSTEM)
-- **Token Encoder (v1)**: Encode 1 or 2 values (`Value 1: Data`, `Value 2: Salt / Secret Key`) into our tamper-evident, reversible `v1$<salt>$<checksum>$<payload>` stream cipher token.
-- **Token Decoder (v1)**: Decode `v1$` tokens back to original payload data and salt, validating integrity against its 32-bit FNV-1a checksum.
-- **Structured License (v2)**: Generate compact `ov2s$` 8-field bitmask license tokens and export `.ovlicense` JSON packages.
-- **License Decoder (v2)**: Decode and inspect claims from `ov2s$` tokens or drag-and-dropped `.ovlicense`, `.ovstruct`, and `.ovhash` files.
-- **Token Verifier**: Fast 1-click token tamper and integrity verification checking embedded FNV-1a checksums.
-
-### 🔄 ENCODING & DECODING
-- **Base64**: UTF-8 safe two-way encoder and decoder with instant swap.
-- **URL**: Full URI and URI Component encoder & decoder.
-- **Hex**: Text to Hexadecimal byte string (`48 65 6c 6c 6f`) and Hex to Text.
-- **Binary**: Text to 8-bit Binary representation (`01001000 01100101...`) and Binary to Text.
-- **HTML Entities**: Character escaping and unescaping (`<>&"'` ↔ `&lt;&gt;&amp;&quot;&#39;`).
-
-### 📅 DATE & TIME
-- **Date Converter**: Convert between ISO 8601, UTC String, Local String, Unix Seconds, and Unix Milliseconds with "Set Now" shortcut.
-- **Timestamp Converter**: Convert Unix timestamps (auto-detects 10-digit seconds vs 13-digit milliseconds) into human-readable date and time.
-- **Timezone Converter**: Live global timezone comparison across UTC, New York (EDT/EST), Los Angeles (PDT/PST), London (BST/GMT), Berlin (CEST/CET), India (IST), Tokyo (JST), and Sydney (AEST).
-- **Date Formatter**: Format dates with custom patterns (`YYYY-MM-DD HH:mm:ss`, `DD/MM/YYYY`, `MM/DD/YYYY`, etc.).
-
-### 🎲 RANDOM
-- **Number**: Cryptographically secure random number generator with Min, Max, Count, Float/Integer toggle, and Unique number enforcement.
-- **String**: Random strings with customizable length and charset toggles (Uppercase, Lowercase, Numbers, Symbols).
-- **UUID**: One-click v4 UUID generator.
-- **Color**: Random color generator producing HEX, RGB, and HSL values with an interactive visual preview swatch.
-- **Custom ID**: Random template-driven ID generator.
-
-### 🔤 TEXT
-- **Case Converter**: Convert text to `camelCase`, `snake_case`, `kebab-case`, `UPPERCASE`, `lowercase`, `Title Case`, `PascalCase`, and `CONSTANT_CASE`.
-- **Slug Generator**: Convert any string into an SEO-friendly URL slug with customizable delimiters (`-` or `_`).
-- **Text Counter**: Detailed live text analysis: Characters (with & without spaces), Words, Sentences, Paragraphs, Lines, Bytes, Estimated Reading Time, and Speaking Time.
-- **Reverse Text**: Reverse text by characters, by words, or by lines.
-- **Remove Duplicate Lines**: Deduplicate multiline lists with Case-sensitive toggle, Whitespace trimming, and Sorting (A→Z, Z→A).
-
-### 🔢 CONVERTERS
-- **Number Base**: Live 4-way reactive converter between Decimal (Base 10), Binary (Base 2), Hexadecimal (Base 16), and Octal (Base 8).
-- **JSON Formatter**: Beautify JSON (2 spaces, 4 spaces, Tab), Minify / Compact, and validate syntax with exact error diagnostics.
-- **JSON ↔ YAML**: Bidirectional converter between JSON and YAML.
-- **CSV ↔ JSON**: Bidirectional table converter between CSV and JSON with customizable delimiters (Comma, Semicolon, Tab).
+### 2. 🔓 Card 2: Type-Aware Decoder
+- **Token Input**: Paste any encoded token from Card 1.
+- **Optional Secret Key / Salt**: Provide the secret password or salt if one was used.
+- **`Decode Token`**: Reverses the token and validates the embedded 32-bit FNV-1a checksum.
+- **Detailed Type & Value Breakdown**:
+  - Displays exactly how many types were originally selected (e.g. `✓ DECODED SUCCESSFULLY · 3 TYPES DETECTED`).
+  - Renders each field with its **original Type Badge** (e.g. `[UUID]`, `[DATE & TIME]`, `[TEXT]`, `[USER ID]`).
+  - Displays the exact value for each type with an individual **Copy Value** button.
 
 ---
 
 ## 🎨 Theme: Minimalist Black & White
 
-- **Monochrome High-Contrast:** Designed for developers, terminal enthusiasts, and distraction-free workflows.
+- **Monochrome High-Contrast:** Built for developers and distraction-free workflows.
 - **Dark Mode (Default):** Solid pure black (`#000000`), dark surfaces (`#0a0a0a`), subtle gray borders (`#222222`), and crisp white typography (`#ffffff`).
-- **Light Mode:** Crisp pure white (`#ffffff`), soft gray cards (`#fafafa`), and solid black typography (`#000000`).
+- **Light Mode:** Crisp pure white (`#ffffff`), soft gray cards (`#f9f9fa`), and solid black typography (`#000000`).
 - **Monospace Font:** Powered by `JetBrains Mono`.
 
 ---
@@ -72,7 +47,7 @@
 # Clone or open directory
 cd offlinevalidetor
 
-# Serve locally (zero build steps, no npm install required)
+# Serve locally
 python3 -m http.server 8000
 
 # Open in browser
@@ -88,16 +63,6 @@ Run the automated test suite with Node.js:
 ```bash
 node tests/ovfileio_test.js
 # *** ALL TESTS PASSED ***
-```
-
----
-
-## 🚢 GitHub Pages Deployment
-
-The repository includes a GitHub Actions workflow (`.github/workflows/deploy.yml` and `static.yml`) that automatically tests and deploys changes to GitHub Pages on every push to `main`:
-
-```bash
-git push origin main
 ```
 
 ---

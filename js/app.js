@@ -760,7 +760,7 @@
 
       decWrap.classList.remove('hidden');
 
-      // 1. JSON License file
+      // 1. JSON License file (.ovlicense or standard JSON)
       if (raw.startsWith('{')) {
         try {
           const json = JSON.parse(raw);
@@ -776,7 +776,22 @@
         return;
       }
 
-      // 2. v2 structured token (ov2s$)
+      // 2. Structured text headers (.ovstruct or .ovhash)
+      if (raw.startsWith('OV-STRUCT') || raw.startsWith('OV-HASH')) {
+        if (window.OVFileIO && typeof window.OVFileIO.parseAndDecode === 'function') {
+          const pad = window.OVFileIO.parseAndDecode(raw);
+          if (pad && pad.valid) {
+            const isStruct = pad.header && pad.header._kind === 'ovstruct';
+            renderDecodeResult(true, `Verified ${isStruct ? '.ovstruct' : '.ovhash'} File`, pad.decoded || pad.header, 'Checksum verified · Tamper-free');
+            return;
+          } else {
+            renderDecodeResult(false, 'File Decode Failed', null, (pad && pad.errors && pad.errors.join(', ')) || 'Integrity check failed');
+            return;
+          }
+        }
+      }
+
+      // 3. v2 structured token (ov2s$)
       if (raw.startsWith('ov2s$')) {
         const r = window.OVHash.structDecode(raw);
         if (r && r.payload) {
@@ -787,7 +802,7 @@
         return;
       }
 
-      // 3. v1 plain text token (v1$)
+      // 4. v1 plain text token (v1$)
       if (raw.startsWith('v1$')) {
         const plain = window.OVHash.decode(raw);
         if (plain !== null) {
@@ -798,7 +813,7 @@
         return;
       }
 
-      renderDecodeResult(false, 'Unrecognized Format', null, 'Token must begin with v1$, ov2s$, or contain a valid JSON license.');
+      renderDecodeResult(false, 'Unrecognized Format', null, 'Token must begin with v1$, ov2s$, OV-STRUCT, OV-HASH, or contain a valid JSON license.');
     }
 
     function renderDecodeResult(ok, title, data, subtitle) {

@@ -1,6 +1,6 @@
 /**
  * app.js
- * Single-Page Website Controller for Offline Validator.
+ * Modern 2026 Single-Page Website Controller for Offline Validator.
  * Handles state, interactive workbench, live validator grid,
  * hash playground, audit history, theme switching, and in-page navigation.
  * 100% Client-Side & GitHub Pages Native.
@@ -8,7 +8,7 @@
 (function () {
   'use strict';
 
-  // DOM Elements
+  // Core DOM Elements
   const $app = document.getElementById('app');
   const $navLinks = document.querySelectorAll('#nav-links .nav-link');
   const $mobileLinks = document.querySelectorAll('#mobile-menu .nav-link');
@@ -30,7 +30,7 @@
     initTheme();
     setupThemeToggle();
 
-    // 2. Render unified single page
+    // 2. Render modern single-page experience
     if (window.OVPages && typeof window.OVPages.singlePage === 'function') {
       $app.innerHTML = window.OVPages.singlePage();
     }
@@ -49,7 +49,7 @@
     wireHashPlayground();
     wireHistory();
 
-    // 5. Initial hash handling (e.g. #validators, #hash)
+    // 5. Initial hash handling
     if (window.location.hash) {
       setTimeout(() => {
         const target = document.querySelector(window.location.hash);
@@ -59,7 +59,7 @@
   }
 
   /* ============================================================
-     THEME (Dark / Light)
+     THEME (Obsidian Dark / Crisp Light)
      ============================================================ */
   function initTheme() {
     try {
@@ -83,7 +83,7 @@
         document.documentElement.removeAttribute('data-theme');
       }
       try { localStorage.setItem('ov-theme', next); } catch (_) {}
-      toast('info', `${next === 'light' ? '☀️' : '🌙'} ${next[0].toUpperCase() + next.slice(1)} Mode`, 'Theme preference saved locally.');
+      toast('info', `${next === 'light' ? '☀️' : '🌙'} ${next[0].toUpperCase() + next.slice(1)} Mode`, 'Theme preference saved.');
     });
   }
 
@@ -108,7 +108,7 @@
   }
 
   /* ============================================================
-     MOBILE MENU
+     RESPONSIVE MOBILE DRAWER MENU
      ============================================================ */
   function setupMobileMenu() {
     if (!$mobileBtn || !$mobileMenu) return;
@@ -147,13 +147,12 @@
           setActiveNav(id);
         }
       });
-    }, { rootMargin: '-20% 0px -70% 0px', threshold: 0.1 });
+    }, { rootMargin: '-25% 0px -65% 0px', threshold: 0.1 });
 
     sections.forEach(s => observer.observe(s));
   }
 
   function setActiveNav(id) {
-    const selector = `a[href="#${id}"]`;
     $navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('href') === `#${id}`));
     $mobileLinks.forEach(l => l.classList.toggle('active', l.getAttribute('href') === `#${id}`));
   }
@@ -216,7 +215,7 @@
     success: { cls: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',  path: 'M5 13l4 4L19 7' },
     error:   { cls: 'bg-rose-500/20 text-rose-300 border-rose-500/30',           path: 'M6 18L18 6M6 6l12 12' },
     warn:    { cls: 'bg-amber-500/20 text-amber-300 border-amber-500/30',         path: 'M12 9v2m0 4h.01M5 19h14a2 2 0 001.732-3L13.732 4a2 2 0 00-3.464 0L3.268 16A2 2 0 005 19z' },
-    info:    { cls: 'bg-violet-500/20 text-violet-300 border-violet-500/30',       path: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+    info:    { cls: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',      path: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
   };
 
   function toast(kind, title, message = '') {
@@ -228,7 +227,7 @@
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="${cfg.path}"/></svg>
       </div>
       <div class="flex-1 min-w-0">
-        <p class="text-sm font-semibold leading-tight">${escapeHtml(title)}</p>
+        <p class="text-sm font-semibold leading-tight text-white">${escapeHtml(title)}</p>
         ${message ? `<p class="text-xs opacity-80 mt-0.5 leading-snug">${escapeHtml(message)}</p>` : ''}
       </div>
       <button class="toast-close flex-shrink-0 opacity-60 hover:opacity-100 transition p-1" aria-label="Close">
@@ -259,7 +258,6 @@
      INTERACTIVE WORKBENCH CONTROLLER
      ============================================================ */
   function wireWorkbench() {
-    const form = document.getElementById('validator-form');
     const input = document.getElementById('v-input');
     const checkBtn = document.getElementById('check-btn');
     const clearBtn = document.getElementById('clear-btn');
@@ -296,7 +294,7 @@
       if (wbBadgeSens) wbBadgeSens.classList.toggle('hidden', !v.sensitive);
       if (wbSelect) wbSelect.value = slug;
 
-      // Setup Input
+      // Setup Input Field
       if (input) {
         input.placeholder = v.placeholder || '';
         input.type = v.sensitive ? 'password' : 'text';
@@ -309,16 +307,16 @@
       if (pwFill) pwFill.style.width = '0%';
       if (pwText) pwText.textContent = '';
 
-      // Update Active Card in Directory Grid
+      // Highlight active card in validator directory
       document.querySelectorAll('#validator-grid .validator-card').forEach(card => {
         card.classList.toggle('active', card.dataset.validator === slug);
       });
 
-      // Render Examples
+      // Populate Live Example Chips
       if (exHost && window.OVPages && window.OVPages.examplesFor) {
         const examples = window.OVPages.examplesFor(slug);
         exHost.innerHTML = examples.map(e =>
-          `<button type="button" class="ex-chip text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-mono border border-slate-700/80 transition hover:border-violet-500/50">${escapeHtml(e)}</button>`
+          `<button type="button" class="ex-chip text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-mono border border-slate-700/80 transition hover:border-indigo-500/50">${escapeHtml(e)}</button>`
         ).join('');
 
         exHost.querySelectorAll('.ex-chip').forEach(chip => {
@@ -356,7 +354,7 @@
 
       const res = v.fn(val);
 
-      // Input visual border styling
+      // Dynamic feedback border
       input.classList.toggle('field-valid', res.valid);
       input.classList.toggle('field-invalid', !res.valid);
 
@@ -366,7 +364,7 @@
         saveToHistory(currentSlug, val, res);
       }
 
-      // Handle password strength
+      // Handle Password Strength Gauge
       if (v.hasStrength && pwFill && pwText) {
         if (res.valid && res.meta && res.meta.score !== undefined) {
           const colors = ['#f43f5e', '#fb7185', '#f59e0b', '#fbbf24', '#10b981', '#34d399'];
@@ -374,7 +372,7 @@
           const score = Math.min(5, Math.max(0, res.meta.score));
           pwFill.style.width = widths[score] + '%';
           pwFill.style.backgroundColor = colors[score];
-          pwText.textContent = `Strength: ${res.meta.strength || 'Good'}`;
+          pwText.textContent = `${res.meta.strength} (${score}/5 score)`;
           pwText.style.color = colors[score];
         } else if (val.length > 0) {
           pwFill.style.width = '15%';
@@ -407,10 +405,10 @@
         <span class="badge ${res.valid ? 'badge-success' : 'badge-error'} self-start">${res.valid ? 'PASS' : 'FAIL'}</span>
       `;
 
-      // Build metadata chips
+      // Build metadata property chips
       const items = [
         ['Input Length', `${val.length} characters`],
-        ['Execution Target', currentSlug],
+        ['Validator Target', currentSlug],
       ];
 
       if (res.meta && typeof res.meta === 'object') {
@@ -498,13 +496,29 @@
       selectValidator(e.target.value);
     });
 
-    // Initialize workbench with default 'email'
+    // Category pills click handler above the workbench
+    document.querySelectorAll('.wb-cat-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.wb-cat-pill').forEach(p => p.classList.remove('active', 'btn-primary'));
+        pill.classList.add('active', 'btn-primary');
+        const cat = pill.dataset.cat;
+
+        // Select first validator in this category
+        const validators = Object.entries(window.OVValidators || {})
+          .filter(([k]) => !['range', 'regex', '_internal'].includes(k));
+
+        let match = validators.find(([k, v]) => cat === 'all' || v.category === cat || (cat === 'security' && v.sensitive));
+        if (match) selectValidator(match[0]);
+      });
+    });
+
+    // Initialize with default 'email'
     selectValidator('email');
     activeWorkbenchRunner = selectValidator;
   }
 
   /* ============================================================
-     VALIDATOR DIRECTORY GRID & FILTERING
+     VALIDATOR DIRECTORY GRID & SEARCH FILTER
      ============================================================ */
   function wireValidatorGrid() {
     const grid = document.getElementById('validator-grid');
@@ -592,15 +606,15 @@
     modeText?.addEventListener('click', () => {
       encText?.classList.remove('hidden');
       encStruct?.classList.add('hidden');
-      modeText.className = 'hp-mode-btn px-4 py-2 rounded-lg text-sm font-medium text-white bg-slate-700/50';
-      modeStruct.className = 'hp-mode-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition';
+      modeText.className = 'hp-mode-btn px-4 py-2 rounded-lg text-sm font-semibold text-white bg-slate-700/50';
+      modeStruct.className = 'hp-mode-btn px-4 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition';
     });
 
     modeStruct?.addEventListener('click', () => {
       encText?.classList.add('hidden');
       encStruct?.classList.remove('hidden');
-      modeStruct.className = 'hp-mode-btn px-4 py-2 rounded-lg text-sm font-medium text-white bg-slate-700/50';
-      modeText.className = 'hp-mode-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition';
+      modeStruct.className = 'hp-mode-btn px-4 py-2 rounded-lg text-sm font-semibold text-white bg-slate-700/50';
+      modeText.className = 'hp-mode-btn px-4 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition';
     });
 
     // v1 Plain Text Encode
@@ -845,7 +859,7 @@
       toast('info', 'File Loaded', f.name);
     });
 
-    // Drag and Drop file handling
+    // Drag and drop zone
     if (dropZone) {
       ['dragenter', 'dragover'].forEach(ev => {
         dropZone.addEventListener(ev, (e) => {
@@ -865,13 +879,13 @@
         const text = await f.text();
         decIn.value = text;
         runDecode();
-        toast('info', 'File Dropped & Loaded', f.name);
+        toast('info', 'File Dropped & Decoded', f.name);
       });
     }
   }
 
   /* ============================================================
-     AUDIT HISTORY
+     AUDIT TRAIL LOG (History)
      ============================================================ */
   function wireHistory() {
     const tbody = document.getElementById('history-tbody');
@@ -958,7 +972,7 @@
     }[c]));
   }
 
-  // Global exports
+  // Expose global controller API
   window.OVApp = {
     toast,
     refreshHistory: wireHistory,

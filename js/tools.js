@@ -96,83 +96,77 @@
   };
 
   /* ============================================================
-     2. HASHING
+     2. CUSTOM CODEC (OUR OWN MADE ENCODER & DECODER SYSTEM)
      ============================================================ */
   const hashing = {
-    // SHA-256, SHA-384, SHA-512 via WebCrypto
-    async digest(algorithm, text) {
-      const bytes = new TextEncoder().encode(text);
-      const buffer = await crypto.subtle.digest(algorithm, bytes);
-      const raw = new Uint8Array(buffer);
-      const hex = Array.from(raw).map(b => b.toString(16).padStart(2, '0')).join('');
-      let bin = '';
-      for (let i = 0; i < raw.length; i++) bin += String.fromCharCode(raw[i]);
-      const base64 = btoa(bin);
-      return { hex, base64, bytes: raw, length: hex.length, bits: raw.length * 8 };
-    },
-
-    // Hash multiple values with a combine mode
-    async hashValues(algorithm, values = [], combineMode = 'salted') {
-      let combined = '';
-      const v1 = values[0] || '';
-      const v2 = values[1] || '';
-      const v3 = values[2] || '';
-
-      if (values.length === 1) {
-        combined = v1;
-      } else if (values.length === 2) {
-        if (combineMode === 'colon') combined = `${v1}:${v2}`;
-        else if (combineMode === 'newline') combined = `${v1}\n${v2}`;
-        else combined = `${v1}${v2}`; // salted / concat default
-      } else {
-        if (combineMode === 'colon') combined = values.join(':');
-        else if (combineMode === 'newline') combined = values.join('\n');
-        else combined = values.join('');
-      }
-
-      // Check for our custom codecs
-      if (algorithm === 'v1-token') {
-        const token = global.OVHash.encode(v1, v2 || undefined);
-        return { hex: token, base64: token, length: token.length, bits: 0, isToken: true };
-      }
-      if (algorithm === 'v2-token') {
-        const r = global.OVHash.structEncode({
-          entity: v1 || 'anonymous',
-          product: 'offline-suite',
-          version: 1,
-          issued: Math.floor(Date.now() / 1000),
-          serial: v2 || 'LIC-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
-        });
-        return { hex: r.token, base64: r.token, length: r.token.length, bits: 0, isToken: true };
-      }
-
-      // MD5
-      if (algorithm === 'MD5') {
-        const hex = computeMD5(combined);
-        return { hex, base64: '', length: 32, bits: 128 };
-      }
-
-      // FNV-1a
-      if (algorithm === 'FNV-1a') {
-        const hex = global.OVHash.checksum32(combined);
-        return { hex, base64: '', length: 8, bits: 32 };
-      }
-
-      return await hashing.digest(algorithm, combined);
-    },
-
-    // File Hash (computes SHA-256, SHA-384, SHA-512 on raw file bytes)
-    async hashFile(file, algorithm = 'SHA-256') {
-      const buffer = await file.arrayBuffer();
-      const hashBuffer = await crypto.subtle.digest(algorithm, buffer);
-      const raw = new Uint8Array(hashBuffer);
-      const hex = Array.from(raw).map(b => b.toString(16).padStart(2, '0')).join('');
+    // Our v1 Stream Cipher Token: 1 or 2 values (Value 1: Data, Value 2: Salt)
+    v1Encode(val1, val2) {
+      const salt = (val2 && val2.trim()) ? val2.trim() : undefined;
+      const token = global.OVHash.encode(val1, salt);
+      const parts = token.split('$');
       return {
-        fileName: file.name,
-        fileSize: file.size,
-        algorithm,
-        hex,
+        token,
+        prefix: parts[0] || 'v1',
+        salt: parts[1] || '',
+        checksum: parts[2] || '',
+        payload: parts[3] || '',
+        length: token.length,
       };
+    },
+
+    v1Decode(token, expectedSalt) {
+      const clean = token.trim();
+      const decoded = global.OVHash.decode(clean, (expectedSalt && expectedSalt.trim()) ? expectedSalt.trim() : undefined);
+      if (decoded === null) throw new Error('Integrity check failed: invalid token or salt mismatch');
+      const parts = clean.split('$');
+      return {
+        data: decoded,
+        salt: parts[1] || '(none)',
+        checksum: parts[2] || '',
+      };
+    },
+
+    // Our v2 Structured License Token (8-field bitmask schema)
+    v2Encode(payload, salt) {
+      const s = (salt && salt.trim()) ? salt.trim() : undefined;
+      const r = global.OVHash.structEncode(payload, { salt: s });
+      const lic = global.OVHash.makeLicenseFile(payload, { salt: s });
+      return {
+        token: r.token,
+        checksum: r.checksum,
+        licensePackage: lic,
+        length: r.token.length,
+      };
+    },
+
+    v2Decode(token, expectedSalt) {
+      const clean = token.trim();
+      const s = (expectedSalt && expectedSalt.trim()) ? expectedSalt.trim() : undefined;
+      const r = global.OVHash.structDecode(clean, s);
+      if (!r || !r.payload) throw new Error('Corrupt or tampered v2 token');
+      return {
+        payload: r.payload,
+        checksum: r.checksum,
+        valid: r.valid,
+      };
+    },
+
+    // Fast tamper detection / verification
+    verifyToken(token) {
+      const clean = (token || '').trim();
+      if (clean.startsWith('v1$')) {
+        const decoded = global.OVHash.decode(clean);
+        return decoded !== null;
+      }
+      if (clean.startsWith('ov2s$')) {
+        return global.OVHash.structVerify(clean);
+      }
+      return false;
+    },
+
+    // Checksum using our 32-bit FNV-1a
+    checksum(data) {
+      return global.OVHash.checksum32(data);
     }
   };
 

@@ -15,12 +15,12 @@
 - **Nano ID**: Compact, URL-friendly collision-resistant IDs with custom alphabet and size configuration.
 - **Custom ID**: Pattern/template-based generator (e.g. `PROD-####-????-@@@@` where `#` = digit, `?` = letter, `@` = alphanumeric).
 
-### 🔐 HASHING
-- **SHA-256**: 256-bit cryptographic hash supporting 1, 2, or 3 values with customizable combine modes (Salted, Colon separated, Newline separated).
-- **SHA-384**: 384-bit cryptographic hash with multi-value support.
-- **SHA-512**: 512-bit high-security cryptographic hash with multi-value support.
-- **File Hash**: Drag & drop any local file to compute its SHA-256, SHA-384, or SHA-512 checksum in microsecond time without uploading data anywhere.
-- **Custom Reversible Codec**: Our proprietary XOR-stream token codec with salt & FNV-1a checksum (v1) and structured license codec (v2).
+### 🔐 OUR CUSTOM CODEC (OUR OWN MADE ENCODER & DECODER SYSTEM)
+- **Token Encoder (v1)**: Encode 1 or 2 values (`Value 1: Data`, `Value 2: Salt / Secret Key`) into our tamper-evident, reversible `v1$<salt>$<checksum>$<payload>` stream cipher token.
+- **Token Decoder (v1)**: Decode `v1$` tokens back to original payload data and salt, validating integrity against its 32-bit FNV-1a checksum.
+- **Structured License (v2)**: Generate compact `ov2s$` 8-field bitmask license tokens and export `.ovlicense` JSON packages.
+- **License Decoder (v2)**: Decode and inspect claims from `ov2s$` tokens or drag-and-dropped `.ovlicense`, `.ovstruct`, and `.ovhash` files.
+- **Token Verifier**: Fast 1-click token tamper and integrity verification checking embedded FNV-1a checksums.
 
 ### 🔄 ENCODING & DECODING
 - **Base64**: UTF-8 safe two-way encoder and decoder with instant swap.
@@ -28,7 +28,6 @@
 - **Hex**: Text to Hexadecimal byte string (`48 65 6c 6c 6f`) and Hex to Text.
 - **Binary**: Text to 8-bit Binary representation (`01001000 01100101...`) and Binary to Text.
 - **HTML Entities**: Character escaping and unescaping (`<>&"'` ↔ `&lt;&gt;&amp;&quot;&#39;`).
-- **Custom Token**: Encode and decode reversible salted cipher tokens.
 
 ### 📅 DATE & TIME
 - **Date Converter**: Convert between ISO 8601, UTC String, Local String, Unix Seconds, and Unix Milliseconds with "Set Now" shortcut.

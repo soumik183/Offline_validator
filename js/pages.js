@@ -21,13 +21,13 @@
     },
     {
       id: 'hashing',
-      name: '🔐 HASHING',
+      name: '🔐 OUR CUSTOM CODEC',
       tools: [
-        { id: 'sha256', name: 'SHA-256', desc: '256-bit secure hash (supports 1 or 2+ values)' },
-        { id: 'sha384', name: 'SHA-384', desc: '384-bit cryptographic hash (supports 1 or 2+ values)' },
-        { id: 'sha512', name: 'SHA-512', desc: '512-bit high-security hash (supports 1 or 2+ values)' },
-        { id: 'filehash', name: 'File Hash', desc: 'Drag & drop any file to compute hashes locally' },
-        { id: 'customcodec', name: 'Custom Codec', desc: 'Our reversible XOR stream + structured license codec' },
+        { id: 'v1encode', name: 'Token Encoder (v1)', desc: 'Encode 1 or 2 values (Data + Salt) into our reversible token' },
+        { id: 'v1decode', name: 'Token Decoder (v1)', desc: 'Decode our v1 token back to original Data and Salt' },
+        { id: 'v2license', name: 'Structured License (v2)', desc: 'Generate tamper-evident 8-field license token & .ovlicense' },
+        { id: 'v2decode', name: 'License Decoder (v2)', desc: 'Decode ov2s$ token or inspect .ovlicense / .ovstruct file' },
+        { id: 'verifier', name: 'Token Verifier', desc: 'Verify token integrity and detect tampering via 32-bit checksum' },
       ]
     },
     {
@@ -39,7 +39,6 @@
         { id: 'hex', name: 'Hex', desc: 'Text to Hexadecimal byte encoder & decoder' },
         { id: 'binary', name: 'Binary', desc: 'Text to 8-bit Binary encoder & decoder' },
         { id: 'html', name: 'HTML Entities', desc: 'HTML escape & unescape entity codec' },
-        { id: 'customtoken', name: 'Custom Token', desc: 'Our reversible v1 & v2 token codec' },
       ]
     },
     {

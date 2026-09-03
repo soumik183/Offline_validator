@@ -299,105 +299,110 @@
   }
 
   /* ============================================================
-     2. HASHING TEMPLATES & HANDLERS
+     2. OUR OWN CUSTOM CODEC (REVERSIBLE TOKEN & LICENSE SYSTEM)
      ============================================================ */
   function renderHashingTool(toolId) {
-    if (toolId === 'filehash') {
+    if (toolId === 'v1encode') {
       return `
         <div class="card-mono p-5 mb-5 space-y-4">
           <div class="flex items-center justify-between">
-            <label class="text-xs font-bold uppercase tracking-wider text-neutral-300">File Hashing</label>
-            <select id="fh-algo" class="input-mono !py-1 !px-2.5 !text-xs !w-auto">
-              <option value="SHA-256">SHA-256</option>
-              <option value="SHA-384">SHA-384</option>
-              <option value="SHA-512">SHA-512</option>
-            </select>
-          </div>
-          <div id="fh-drop-zone" class="drag-zone-mono">
-            <p class="text-sm font-bold text-white mb-1">Drag &amp; Drop any file here</p>
-            <p class="text-xs text-neutral-400">or click to browse from device. Hash runs 100% locally in browser memory.</p>
-            <input type="file" id="fh-file-input" class="hidden" />
-          </div>
-          <div id="fh-file-details" class="hidden text-xs text-neutral-400 font-mono pt-2 border-t border-neutral-800"></div>
-        </div>
-        ${renderOutputCard('filehash-output')}
-      `;
-    }
-
-    if (toolId === 'customcodec') {
-      return `
-        <div class="card-mono p-5 mb-5 space-y-4">
-          <div class="flex items-center justify-between mb-2">
-            <label class="text-xs font-bold uppercase tracking-wider text-neutral-300">Reversible Token Codec (v1 / v2)</label>
-            <div class="flex gap-1.5" id="codec-mode-pills">
-              <button type="button" class="pill-tab active" data-mode="encode">Encode</button>
-              <button type="button" class="pill-tab" data-mode="decode">Decode</button>
+            <span class="text-xs font-bold uppercase tracking-wider text-neutral-300">1 or 2 Values Encoding</span>
+            <div class="flex gap-1.5" id="v1-field-modes">
+              <button type="button" class="pill-tab active" data-fields="1">1 Value (Data)</button>
+              <button type="button" class="pill-tab" data-fields="2">2 Values (Data + Salt)</button>
             </div>
           </div>
-          <div id="codec-field-data">
-            <label class="block text-xs font-bold text-neutral-400 uppercase mb-1">Payload / Text</label>
-            <textarea id="codec-in-data" rows="3" class="input-mono text-xs resize-y" placeholder="Type text to encode, or paste token to decode…"></textarea>
+          <div>
+            <div class="flex items-center justify-between mb-1 text-[11px] text-neutral-400">
+              <span class="font-bold text-neutral-300">VALUE 1: PAYLOAD / DATA</span>
+              <span id="v1-cnt-1">0 chars</span>
+            </div>
+            <textarea id="v1-val-data" rows="3" class="input-mono text-xs resize-y font-mono" placeholder="Enter primary value to encode…"></textarea>
           </div>
-          <div id="codec-field-salt">
-            <label class="block text-xs font-bold text-neutral-400 uppercase mb-1">Salt / Key <span class="text-neutral-500 font-normal">(optional)</span></label>
-            <input type="text" id="codec-in-salt" class="input-mono text-xs font-mono" placeholder="Custom salt (optional)" />
+          <div id="v1-salt-wrap" class="hidden">
+            <div class="flex items-center justify-between mb-1 text-[11px] text-neutral-400">
+              <span class="font-bold text-neutral-300">VALUE 2: SALT / SECRET KEY <span class="text-neutral-500 font-normal">(optional)</span></span>
+              <span id="v1-cnt-2">0 chars</span>
+            </div>
+            <input type="text" id="v1-val-salt" class="input-mono text-xs font-mono" placeholder="Custom salt (auto-generated if empty)" />
           </div>
           <div class="flex items-center gap-2">
-            <button type="button" id="btn-codec-run" class="btn-mono btn-mono-primary !py-2 flex-1">Encode Token</button>
-            <button type="button" id="btn-codec-sample" class="btn-mono !py-2">Sample</button>
+            <button type="button" id="btn-v1-run" class="btn-mono btn-mono-primary !py-2 flex-1">Generate Token</button>
+            <button type="button" id="btn-v1-sample" class="btn-mono !py-2 text-xs">Sample</button>
           </div>
         </div>
-        ${renderOutputCard('codec-output')}
+        ${renderOutputCard('v1-out')}
       `;
     }
 
-    // Standard SHA-256, SHA-384, SHA-512 with 1 or multiple values
-    return `
-      <div class="card-mono p-5 mb-5 space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
-          <label class="text-xs font-bold uppercase tracking-wider text-neutral-300">Values to Hash</label>
-          <div class="flex items-center gap-1.5" id="hash-val-modes">
-            <button type="button" class="pill-tab active" data-count="1">1 Value</button>
-            <button type="button" class="pill-tab" data-count="2">2 Values (Data + Salt/Key)</button>
-            <button type="button" class="pill-tab" data-count="3">3 Values</button>
+    if (toolId === 'v1decode') {
+      return `
+        <div class="card-mono p-5 mb-5 space-y-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-neutral-300 mb-1">Input v1$ Token</label>
+            <textarea id="v1-dec-token" rows="3" class="input-mono text-xs resize-y font-mono" placeholder="Paste v1$salt$checksum$payload token here…"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">Expected Salt <span class="text-neutral-500 font-normal">(optional verification)</span></label>
+            <input type="text" id="v1-dec-salt" class="input-mono text-xs font-mono" placeholder="Leave empty to auto-extract salt from token" />
+          </div>
+          <button type="button" id="btn-v1-dec-run" class="btn-mono btn-mono-primary !w-full !py-2">Decode Token</button>
+          <div id="v1-dec-meta" class="hidden p-3 bg-neutral-900 border border-neutral-800 rounded-lg text-xs font-mono"></div>
+        </div>
+        ${renderOutputCard('v1-dec-out')}
+      `;
+    }
+
+    if (toolId === 'v2license') {
+      return `
+        <div class="card-mono p-5 mb-5 space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div><label class="block text-[11px] font-bold text-neutral-400 uppercase mb-1">Entity / User ID</label><input type="text" id="v2-ent" class="input-mono text-xs font-mono" value="usr_enterprise_9821" /></div>
+            <div><label class="block text-[11px] font-bold text-neutral-400 uppercase mb-1">Product ID</label><input type="text" id="v2-prod" class="input-mono text-xs font-mono" value="offline-suite" /></div>
+            <div><label class="block text-[11px] font-bold text-neutral-400 uppercase mb-1">Version</label><input type="number" id="v2-ver" class="input-mono text-xs font-mono" value="2" /></div>
+            <div><label class="block text-[11px] font-bold text-neutral-400 uppercase mb-1">Serial Key</label><input type="text" id="v2-ser" class="input-mono text-xs font-mono" value="LIC-2026-ABCD-99" /></div>
+            <div><label class="block text-[11px] font-bold text-neutral-400 uppercase mb-1">Plan</label><input type="text" id="v2-plan" class="input-mono text-xs font-mono" value="enterprise" /></div>
+            <div><label class="block text-[11px] font-bold text-neutral-400 uppercase mb-1">Feature Flags (comma separated)</label><input type="text" id="v2-flags" class="input-mono text-xs font-mono" value="api,export,audit" /></div>
+          </div>
+          <div class="flex items-center gap-2 pt-2 border-t border-neutral-800">
+            <button type="button" id="btn-v2-run" class="btn-mono btn-mono-primary !py-2 flex-1">Generate v2 Token</button>
+            <button type="button" id="btn-v2-dl" class="btn-mono !py-2 text-xs">Download .ovlicense</button>
           </div>
         </div>
+        ${renderOutputCard('v2-out')}
+      `;
+    }
 
-        <div id="hash-combine-row" class="hidden flex items-center justify-between text-xs py-2 border-y border-neutral-800">
-          <span class="text-neutral-400 font-semibold uppercase text-[11px]">Combine Method:</span>
-          <select id="hash-combine-mode" class="input-mono !py-1 !px-2 !text-xs !w-auto">
-            <option value="salted">Salted: Value 1 + Value 2</option>
-            <option value="colon">Colon Separated: Value 1 : Value 2</option>
-            <option value="newline">Newline Separated</option>
-          </select>
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between mb-1 text-[11px] text-neutral-400">
-            <span class="font-bold text-neutral-300">VALUE 1: DATA / MESSAGE</span>
-            <span id="h-char-cnt-1">0 chars</span>
+    if (toolId === 'v2decode') {
+      return `
+        <div class="card-mono p-5 mb-5 space-y-4">
+          <div id="v2-drop-zone" class="drag-zone-mono">
+            <p class="text-sm font-bold text-white mb-1">Drop a .ovlicense, .ovstruct, or .ovhash file here</p>
+            <p class="text-xs text-neutral-400">or click to upload from local machine</p>
+            <input type="file" id="v2-file-in" class="hidden" accept=".ovlicense,.ovstruct,.ovhash,.json,.txt" />
           </div>
-          <textarea id="h-val-1" rows="2" class="input-mono text-xs resize-y" placeholder="Enter primary value to hash…"></textarea>
-        </div>
-
-        <div id="h-wrap-2" class="hidden">
-          <div class="flex items-center justify-between mb-1 text-[11px] text-neutral-400">
-            <span class="font-bold text-neutral-300">VALUE 2: SALT / SECRET KEY</span>
-            <span id="h-char-cnt-2">0 chars</span>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-neutral-300 mb-1">Or Paste Token / JSON License</label>
+            <textarea id="v2-dec-in" rows="3" class="input-mono text-xs resize-y font-mono" placeholder="Paste ov2s$… token or JSON file content…"></textarea>
           </div>
-          <input type="text" id="h-val-2" class="input-mono text-xs" placeholder="Enter salt or secondary value…" />
+          <button type="button" id="btn-v2-dec-run" class="btn-mono btn-mono-primary !w-full !py-2">Decode &amp; Inspect</button>
+          <div id="v2-dec-result" class="hidden p-4 bg-neutral-900 border border-neutral-800 rounded-lg text-xs font-mono"></div>
         </div>
+      `;
+    }
 
-        <div id="h-wrap-3" class="hidden">
-          <div class="flex items-center justify-between mb-1 text-[11px] text-neutral-400">
-            <span class="font-bold text-neutral-300">VALUE 3: EXTRA VALUE</span>
-            <span id="h-char-cnt-3">0 chars</span>
-          </div>
-          <input type="text" id="h-val-3" class="input-mono text-xs" placeholder="Enter third value…" />
+    if (toolId === 'verifier') {
+      return `
+        <div class="card-mono p-5 mb-5 space-y-4">
+          <label class="block text-xs font-bold uppercase tracking-wider text-neutral-300">Input Token to Verify</label>
+          <textarea id="vf-token" rows="3" class="input-mono text-xs resize-y font-mono" placeholder="Paste v1$… or ov2s$… token to check for tampering…"></textarea>
+          <button type="button" id="btn-vf-run" class="btn-mono btn-mono-primary !w-full !py-2">Verify Token Integrity</button>
+          <div id="vf-result" class="hidden p-4 rounded-lg text-xs font-mono"></div>
         </div>
-      </div>
-      ${renderOutputCard('hash-output', true)}
-    `;
+      `;
+    }
+
+    return '';
   }
 
   /* ============================================================
@@ -840,128 +845,219 @@
       run();
     }
 
-    // 2. Hashing
-    if (toolId === 'sha256' || toolId === 'sha384' || toolId === 'sha512') {
-      const algo = toolId.toUpperCase();
-      let activeCnt = 1;
-
-      const run = async () => {
-        const v1 = document.getElementById('h-val-1')?.value || '';
-        const v2 = document.getElementById('h-val-2')?.value || '';
-        const v3 = document.getElementById('h-val-3')?.value || '';
-        const combine = document.getElementById('hash-combine-mode')?.value || 'salted';
-
-        const vals = [v1];
-        if (activeCnt >= 2) vals.push(v2);
-        if (activeCnt >= 3) vals.push(v3);
-
-        const res = await T.hashing.hashValues(algo, vals, combine);
-        const out = document.getElementById('hash-output');
-        if (out) out.value = res.hex;
-      };
-
-      document.querySelectorAll('#hash-val-modes .pill-tab').forEach(p => {
-        p.addEventListener('click', () => {
-          document.querySelectorAll('#hash-val-modes .pill-tab').forEach(b => b.classList.remove('active'));
-          p.classList.add('active');
-          activeCnt = +p.dataset.count;
-
-          document.getElementById('hash-combine-row')?.classList.toggle('hidden', activeCnt < 2);
-          document.getElementById('h-wrap-2')?.classList.toggle('hidden', activeCnt < 2);
-          document.getElementById('h-wrap-3')?.classList.toggle('hidden', activeCnt < 3);
-          run();
-        });
-      });
-
-      ['h-val-1', 'h-val-2', 'h-val-3'].forEach(id => {
-        document.getElementById(id)?.addEventListener('input', run);
-      });
-      document.getElementById('hash-combine-mode')?.addEventListener('change', run);
-
-      // Compare feature
-      document.getElementById('hash-compare-input')?.addEventListener('input', (e) => {
-        const val = e.target.value.trim().toLowerCase();
-        const current = (document.getElementById('hash-output')?.value || '').trim().toLowerCase();
-        const badge = document.getElementById('hash-compare-badge');
-        if (!badge) return;
-        if (!val || !current) {
-          badge.classList.add('hidden');
-          return;
-        }
-        badge.classList.remove('hidden');
-        badge.textContent = val === current ? 'MATCH ✓' : 'MISMATCH ✗';
-        badge.className = 'badge-mono text-[10px] ' + (val === current ? 'badge-mono-invert' : 'border-neutral-600');
-      });
-
-      run();
-    }
-
-    if (toolId === 'filehash') {
-      const dropZone = document.getElementById('fh-drop-zone');
-      const fileIn = document.getElementById('fh-file-input');
-      const algoSel = document.getElementById('fh-algo');
-      const details = document.getElementById('fh-file-details');
-      const out = document.getElementById('filehash-output');
-
-      const processFile = async (f) => {
-        if (!f) return;
-        const algo = algoSel?.value || 'SHA-256';
-        if (details) {
-          details.classList.remove('hidden');
-          details.textContent = `File: ${f.name} · Size: ${(f.size / 1024).toFixed(2)} KB`;
-        }
-        const res = await T.hashing.hashFile(f, algo);
-        if (out) out.value = res.hex;
-      };
-
-      dropZone?.addEventListener('click', () => fileIn?.click());
-      fileIn?.addEventListener('change', (e) => processFile(e.target.files?.[0]));
-      dropZone?.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-      dropZone?.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-      dropZone?.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('drag-over');
-        processFile(e.dataTransfer?.files?.[0]);
-      });
-    }
-
-    if (toolId === 'customcodec') {
-      let mode = 'encode';
-      const inData = document.getElementById('codec-in-data');
-      const inSalt = document.getElementById('codec-in-salt');
-      const runBtn = document.getElementById('btn-codec-run');
-      const sampleBtn = document.getElementById('btn-codec-sample');
-      const out = document.getElementById('codec-output');
+    // 2. OUR CUSTOM CODEC
+    if (toolId === 'v1encode') {
+      let fieldCount = 1;
+      const dataIn = document.getElementById('v1-val-data');
+      const saltIn = document.getElementById('v1-val-salt');
+      const saltWrap = document.getElementById('v1-salt-wrap');
+      const out = document.getElementById('v1-out');
 
       const run = () => {
-        const val = inData?.value || '';
-        const salt = inSalt?.value || '';
-        if (mode === 'encode') {
-          const tok = global.OVHash.encode(val, salt || undefined);
-          if (out) out.value = tok;
-        } else {
-          const plain = global.OVHash.decode(val, salt || undefined);
-          if (out) out.value = plain !== null ? plain : 'Error: Invalid token or salt mismatch.';
-        }
+        const val1 = dataIn?.value || '';
+        const val2 = fieldCount === 2 ? (saltIn?.value || '') : '';
+        if (!val1) { if (out) out.value = ''; return; }
+        const res = T.hashing.v1Encode(val1, val2);
+        if (out) out.value = res.token;
       };
 
-      document.querySelectorAll('#codec-mode-pills .pill-tab').forEach(p => {
+      document.querySelectorAll('#v1-field-modes .pill-tab').forEach(p => {
         p.addEventListener('click', () => {
-          document.querySelectorAll('#codec-mode-pills .pill-tab').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('#v1-field-modes .pill-tab').forEach(b => b.classList.remove('active'));
           p.classList.add('active');
-          mode = p.dataset.mode;
-          if (runBtn) runBtn.textContent = mode === 'encode' ? 'Encode Token' : 'Decode Token';
+          fieldCount = +p.dataset.fields;
+          saltWrap?.classList.toggle('hidden', fieldCount < 2);
           run();
         });
       });
 
-      runBtn?.addEventListener('click', run);
-      sampleBtn?.addEventListener('click', () => {
-        if (inData) inData.value = 'Secret User Credentials 2026';
-        if (inSalt) inSalt.value = 'app_salt_xyz';
+      dataIn?.addEventListener('input', run);
+      saltIn?.addEventListener('input', run);
+      document.getElementById('btn-v1-run')?.addEventListener('click', run);
+      document.getElementById('btn-v1-sample')?.addEventListener('click', () => {
+        if (dataIn) dataIn.value = 'Offline Confidential Payload 2026';
+        if (saltIn) saltIn.value = 'user_secret_key_88';
         run();
       });
       run();
+    }
+
+    if (toolId === 'v1decode') {
+      const tokIn = document.getElementById('v1-dec-token');
+      const saltIn = document.getElementById('v1-dec-salt');
+      const out = document.getElementById('v1-dec-out');
+      const meta = document.getElementById('v1-dec-meta');
+
+      const run = () => {
+        const tok = tokIn?.value || '';
+        if (!tok) {
+          if (out) out.value = '';
+          meta?.classList.add('hidden');
+          return;
+        }
+        try {
+          const res = T.hashing.v1Decode(tok, saltIn?.value);
+          if (out) out.value = res.data;
+          if (meta) {
+            meta.classList.remove('hidden');
+            meta.innerHTML = `
+              <div class="text-white font-bold mb-1">INTEGRITY VERIFIED ✓</div>
+              <div class="text-neutral-400">Extracted Salt: <span class="text-white">${res.salt}</span></div>
+              <div class="text-neutral-400">FNV-1a Checksum: <span class="text-white">${res.checksum}</span></div>
+            `;
+          }
+        } catch (err) {
+          if (out) out.value = 'Error: ' + err.message;
+          if (meta) meta.classList.add('hidden');
+        }
+      };
+
+      document.getElementById('btn-v1-dec-run')?.addEventListener('click', run);
+      tokIn?.addEventListener('input', run);
+      saltIn?.addEventListener('input', run);
+    }
+
+    if (toolId === 'v2license') {
+      const entIn = document.getElementById('v2-ent');
+      const prodIn = document.getElementById('v2-prod');
+      const verIn = document.getElementById('v2-ver');
+      const serIn = document.getElementById('v2-ser');
+      const planIn = document.getElementById('v2-plan');
+      const flagsIn = document.getElementById('v2-flags');
+      const out = document.getElementById('v2-out');
+
+      const getPayload = () => ({
+        entity: entIn?.value || 'user',
+        product: prodIn?.value || 'app',
+        version: +verIn?.value || 1,
+        serial: serIn?.value || 'LIC-000',
+        plan: planIn?.value || 'pro',
+        flags: (flagsIn?.value || '').split(',').map(f => f.trim()).filter(Boolean),
+        issued: Math.floor(Date.now() / 1000),
+      });
+
+      const run = () => {
+        const payload = getPayload();
+        const res = T.hashing.v2Encode(payload);
+        if (out) out.value = res.token;
+      };
+
+      document.getElementById('btn-v2-run')?.addEventListener('click', run);
+      document.getElementById('btn-v2-dl')?.addEventListener('click', () => {
+        const payload = getPayload();
+        const res = T.hashing.v2Encode(payload);
+        const blob = new Blob([JSON.stringify(res.licensePackage, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${payload.entity || 'license'}.ovlicense`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast('DOWNLOADED', 'Saved .ovlicense package.');
+      });
+
+      [entIn, prodIn, verIn, serIn, planIn, flagsIn].forEach(el => el?.addEventListener('input', run));
+      run();
+    }
+
+    if (toolId === 'v2decode') {
+      const dropZone = document.getElementById('v2-drop-zone');
+      const fileIn = document.getElementById('v2-file-in');
+      const decIn = document.getElementById('v2-dec-in');
+      const resultBox = document.getElementById('v2-dec-result');
+
+      const displayResult = (res) => {
+        if (!resultBox) return;
+        resultBox.classList.remove('hidden');
+        resultBox.innerHTML = `
+          <div class="text-white font-bold mb-2">STRUCTURED LICENSE CLAIMS (VERIFIED ✓)</div>
+          <div class="space-y-1 text-neutral-300">
+            <div><span class="text-neutral-500">Entity:</span> ${escapeHtml(res.entity || res.product)}</div>
+            <div><span class="text-neutral-500">Product:</span> ${escapeHtml(res.product || '-')}</div>
+            <div><span class="text-neutral-500">Plan:</span> ${escapeHtml(res.plan || '-')}</div>
+            <div><span class="text-neutral-500">Serial:</span> ${escapeHtml(res.serial || '-')}</div>
+            <div><span class="text-neutral-500">Version:</span> ${res.version || '-'}</div>
+            <div><span class="text-neutral-500">Flags:</span> ${Array.isArray(res.flags) ? res.flags.join(', ') : '-'}</div>
+          </div>
+        `;
+      };
+
+      const parseText = (txt) => {
+        const clean = txt.trim();
+        if (!clean) return;
+        try {
+          if (clean.startsWith('{')) {
+            const parsed = JSON.parse(clean);
+            if (parsed.token) {
+              const r = T.hashing.v2Decode(parsed.token);
+              displayResult(r.payload);
+            } else {
+              displayResult(parsed);
+            }
+          } else if (clean.startsWith('ov2s$')) {
+            const r = T.hashing.v2Decode(clean);
+            displayResult(r.payload);
+          } else if (clean.startsWith('v1$')) {
+            const r = T.hashing.v1Decode(clean);
+            if (resultBox) {
+              resultBox.classList.remove('hidden');
+              resultBox.innerHTML = `<div class="text-white font-bold mb-1">DECODED V1 PAYLOAD</div><div>${escapeHtml(r.data)}</div>`;
+            }
+          }
+        } catch (err) {
+          if (resultBox) {
+            resultBox.classList.remove('hidden');
+            resultBox.innerHTML = `<div class="text-neutral-400">Error: ${escapeHtml(err.message)}</div>`;
+          }
+        }
+      };
+
+      dropZone?.addEventListener('click', () => fileIn?.click());
+      fileIn?.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          const txt = await file.text();
+          if (decIn) decIn.value = txt;
+          parseText(txt);
+        }
+      });
+      dropZone?.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+      dropZone?.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+      dropZone?.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) {
+          const txt = await file.text();
+          if (decIn) decIn.value = txt;
+          parseText(txt);
+        }
+      });
+      document.getElementById('btn-v2-dec-run')?.addEventListener('click', () => parseText(decIn?.value || ''));
+    }
+
+    if (toolId === 'verifier') {
+      const tokIn = document.getElementById('vf-token');
+      const resBox = document.getElementById('vf-result');
+
+      const run = () => {
+        const tok = tokIn?.value?.trim() || '';
+        if (!tok) { resBox?.classList.add('hidden'); return; }
+        const isValid = T.hashing.verifyToken(tok);
+        if (resBox) {
+          resBox.classList.remove('hidden');
+          if (isValid) {
+            resBox.className = 'p-4 rounded-lg text-xs font-mono bg-neutral-900 border border-white text-white font-bold';
+            resBox.textContent = 'TOKEN VERIFIED ✓: Checksum matched. Token payload is authentic and untampered.';
+          } else {
+            resBox.className = 'p-4 rounded-lg text-xs font-mono bg-neutral-900 border border-neutral-700 text-neutral-400 font-bold';
+            resBox.textContent = 'VERIFICATION FAILED ✗: Checksum mismatch or invalid format. Token has been altered or corrupted.';
+          }
+        }
+      };
+
+      document.getElementById('btn-vf-run')?.addEventListener('click', run);
+      tokIn?.addEventListener('input', run);
     }
 
     // 3. Encoding

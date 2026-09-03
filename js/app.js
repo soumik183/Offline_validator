@@ -1,984 +1,503 @@
 /**
  * app.js
- * Modern 2026 Single-Page Website Controller for Offline Validator.
- * Handles state, interactive workbench, live validator grid,
- * hash playground, audit history, theme switching, and in-page navigation.
- * 100% Client-Side & GitHub Pages Native.
+ * Minimalist Black & White Single-Page Controller for Offline Hash Engine.
+ * Supports 1 or multiple values, multiple cryptographic algorithms,
+ * real-time hashing, comparison, and token decoding.
  */
 (function () {
   'use strict';
 
-  // Core DOM Elements
-  const $app = document.getElementById('app');
-  const $navLinks = document.querySelectorAll('#nav-links .nav-link');
-  const $mobileLinks = document.querySelectorAll('#mobile-menu .nav-link');
-  const $mobileBtn = document.getElementById('mobile-menu-btn');
-  const $mobileMenu = document.getElementById('mobile-menu');
-  const $onlineStatus = document.getElementById('online-status');
-  const $onlineText = document.getElementById('online-status-text');
-  const $onlineStatusMobile = document.getElementById('online-status-mobile');
-  const $onlineTextMobile = document.getElementById('online-status-text-mobile');
-  const $themeToggle = document.getElementById('theme-toggle');
-
-  let currentSlug = 'email';
-  let activeWorkbenchRunner = null;
+  // State
+  let currentAlgo = 'SHA-256';
+  let activeFieldsCount = 1; // 1, 2, or 3
+  let isUppercase = false;
+  let isBase64 = false;
+  let rawHashBytes = null;
+  let currentHexHash = '';
 
   document.addEventListener('DOMContentLoaded', init);
 
   function init() {
-    // 1. Theme initialization
     initTheme();
     setupThemeToggle();
+    setupOnlineStatus();
 
-    // 2. Render modern single-page experience
-    if (window.OVPages && typeof window.OVPages.singlePage === 'function') {
+    // Render single-page template
+    const $app = document.getElementById('app');
+    if ($app && window.OVPages && typeof window.OVPages.singlePage === 'function') {
       $app.innerHTML = window.OVPages.singlePage();
     }
 
-    // 3. Setup system services
-    setupOnlineStatus();
-    setupMobileMenu();
-    setupToast();
-    setupInPageNav();
-    setupScrollSpy();
-    setupKeyboardShortcuts();
+    wireAlgorithmSelector();
+    wireFieldSelection();
+    wireInputsAndHashing();
+    wireOutputActions();
+    wireComparison();
+    wireDecoder();
 
-    // 4. Wire interactive modules
-    wireWorkbench();
-    wireValidatorGrid();
-    wireHashPlayground();
-    wireHistory();
-
-    // 5. Initial hash handling
-    if (window.location.hash) {
-      setTimeout(() => {
-        const target = document.querySelector(window.location.hash);
-        if (target) target.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    }
+    // Initial calculation with sample
+    recalculateHash();
   }
 
   /* ============================================================
-     THEME (Obsidian Dark / Crisp Light)
+     THEME (Pure Black & Pure White)
      ============================================================ */
   function initTheme() {
+    const $themeText = document.getElementById('theme-text');
     try {
       const saved = localStorage.getItem('ov-theme');
       if (saved === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
+        if ($themeText) $themeText.textContent = 'DARK';
       } else {
         document.documentElement.removeAttribute('data-theme');
+        if ($themeText) $themeText.textContent = 'LIGHT';
       }
     } catch (_) {}
   }
 
   function setupThemeToggle() {
-    if (!$themeToggle) return;
-    $themeToggle.addEventListener('click', () => {
+    const btn = document.getElementById('theme-toggle');
+    const $themeText = document.getElementById('theme-text');
+    if (!btn) return;
+
+    btn.addEventListener('click', () => {
       const isLight = document.documentElement.getAttribute('data-theme') === 'light';
       const next = isLight ? 'dark' : 'light';
       if (next === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
+        if ($themeText) $themeText.textContent = 'DARK';
       } else {
         document.documentElement.removeAttribute('data-theme');
+        if ($themeText) $themeText.textContent = 'LIGHT';
       }
       try { localStorage.setItem('ov-theme', next); } catch (_) {}
-      toast('info', `${next === 'light' ? '☀️' : '🌙'} ${next[0].toUpperCase() + next.slice(1)} Mode`, 'Theme preference saved.');
+      toast(next.toUpperCase() + ' THEME', 'Switched monochrome appearance.');
     });
   }
 
   /* ============================================================
-     ONLINE STATUS DETECTOR
+     ONLINE STATUS
      ============================================================ */
   function setupOnlineStatus() {
+    const dot = document.getElementById('online-status-dot');
+    const text = document.getElementById('online-status-text');
     const update = () => {
       const online = navigator.onLine;
-      const setOne = ($el, $txt) => {
-        if (!$el) return;
-        $el.classList.toggle('online', online);
-        $el.classList.toggle('offline', !online);
-        if ($txt) $txt.textContent = online ? 'Online' : 'Offline';
-      };
-      setOne($onlineStatus, $onlineText);
-      setOne($onlineStatusMobile, $onlineTextMobile);
+      if (dot) dot.style.opacity = online ? '1' : '0.3';
+      if (text) text.textContent = online ? 'ONLINE' : 'OFFLINE';
     };
-    window.addEventListener('online',  update);
+    window.addEventListener('online', update);
     window.addEventListener('offline', update);
     update();
   }
 
   /* ============================================================
-     RESPONSIVE MOBILE DRAWER MENU
+     STEP 1: ALGORITHM SELECTION
      ============================================================ */
-  function setupMobileMenu() {
-    if (!$mobileBtn || !$mobileMenu) return;
-    $mobileBtn.addEventListener('click', () => {
-      $mobileMenu.classList.toggle('hidden');
-    });
-  }
-
-  /* ============================================================
-     IN-PAGE NAVIGATION & SMOOTH SCROLLING
-     ============================================================ */
-  function setupInPageNav() {
-    document.body.addEventListener('click', (e) => {
-      const a = e.target.closest('a[href^="#"]');
-      if (!a) return;
-      const hash = a.getAttribute('href');
-      if (!hash || hash === '#') return;
-      const target = document.querySelector(hash);
-      if (target) {
-        e.preventDefault();
-        target.scrollIntoView({ behavior: 'smooth' });
-        if (history.pushState) history.pushState(null, '', hash);
-        if ($mobileMenu) $mobileMenu.classList.add('hidden');
-      }
-    });
-  }
-
-  function setupScrollSpy() {
-    const sections = document.querySelectorAll('section[id]');
-    if (!sections.length || !('IntersectionObserver' in window)) return;
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const id = entry.target.getAttribute('id');
-          setActiveNav(id);
-        }
-      });
-    }, { rootMargin: '-25% 0px -65% 0px', threshold: 0.1 });
-
-    sections.forEach(s => observer.observe(s));
-  }
-
-  function setActiveNav(id) {
-    $navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('href') === `#${id}`));
-    $mobileLinks.forEach(l => l.classList.toggle('active', l.getAttribute('href') === `#${id}`));
-  }
-
-  /* ============================================================
-     KEYBOARD SHORTCUTS
-     ============================================================ */
-  function setupKeyboardShortcuts() {
-    document.addEventListener('keydown', (e) => {
-      const tag = (e.target.tagName || '').toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-
-      // Cmd/Ctrl+K — focus validator search
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        const s = document.getElementById('search');
-        if (s) {
-          s.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setTimeout(() => { s.focus(); s.select(); }, 200);
-        }
-      }
-
-      // Quick jumps
-      if (e.key === 'g') {
-        document.addEventListener('keydown', (e2) => {
-          const map = {
-            h: '#overview',
-            v: '#validators',
-            w: '#workbench',
-            c: '#hash',
-            H: '#history',
-            a: '#about',
-          };
-          if (map[e2.key]) {
-            const target = document.querySelector(map[e2.key]);
-            if (target) target.scrollIntoView({ behavior: 'smooth' });
-          }
-        }, { once: true });
-      }
-
-      if (e.key === 'Escape') {
-        if ($mobileMenu) $mobileMenu.classList.add('hidden');
-      }
-    });
-  }
-
-  /* ============================================================
-     TOAST NOTIFICATIONS
-     ============================================================ */
-  function setupToast() {
-    document.body.addEventListener('click', (e) => {
-      if (e.target.closest('.toast-close')) {
-        const t = e.target.closest('.toast');
-        if (t) dismissToast(t);
-      }
-    });
-  }
-
-  const TOAST_CFG = {
-    success: { cls: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',  path: 'M5 13l4 4L19 7' },
-    error:   { cls: 'bg-rose-500/20 text-rose-300 border-rose-500/30',           path: 'M6 18L18 6M6 6l12 12' },
-    warn:    { cls: 'bg-amber-500/20 text-amber-300 border-amber-500/30',         path: 'M12 9v2m0 4h.01M5 19h14a2 2 0 001.732-3L13.732 4a2 2 0 00-3.464 0L3.268 16A2 2 0 005 19z' },
-    info:    { cls: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',      path: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+  const ALGO_SPECS = {
+    'SHA-256': '256-bit secure cryptographic hash',
+    'SHA-512': '512-bit high-security cryptographic hash',
+    'SHA-1':   '160-bit legacy cryptographic hash',
+    'MD5':     '128-bit RFC 1321 message digest',
+    'FNV-1a':  '32-bit Fowler–Noll–Vo non-crypto hash',
+    'v1-token':'Reversible XOR stream cipher + salt + FNV-1a',
+    'v2-token':'Reversible 8-field structured license token',
   };
 
-  function toast(kind, title, message = '') {
-    const cfg = TOAST_CFG[kind] || TOAST_CFG.info;
-    const node = document.createElement('div');
-    node.className = 'toast pointer-events-auto px-4 py-3 rounded-xl flex items-start gap-3 min-w-[280px] max-w-sm opacity-0 translate-x-6 border shadow-xl z-50';
-    node.innerHTML = `
-      <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border ${cfg.cls}">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="${cfg.path}"/></svg>
-      </div>
-      <div class="flex-1 min-w-0">
-        <p class="text-sm font-semibold leading-tight text-white">${escapeHtml(title)}</p>
-        ${message ? `<p class="text-xs opacity-80 mt-0.5 leading-snug">${escapeHtml(message)}</p>` : ''}
-      </div>
-      <button class="toast-close flex-shrink-0 opacity-60 hover:opacity-100 transition p-1" aria-label="Close">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-    `;
-    const container = document.getElementById('toast-container');
-    if (!container) return null;
-    container.appendChild(node);
-    requestAnimationFrame(() => {
-      node.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
-      node.style.opacity = '1';
-      node.style.transform = 'translateX(0)';
-    });
-    setTimeout(() => dismissToast(node), 4000);
-    return node;
-  }
+  function wireAlgorithmSelector() {
+    const pills = document.querySelectorAll('#algo-pills .pill-tab');
+    const spec = document.getElementById('algo-spec');
+    const badge = document.getElementById('hash-info-badge');
 
-  function dismissToast(node) {
-    if (!node || !node.parentNode) return;
-    node.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
-    node.style.opacity = '0';
-    node.style.transform = 'translateX(24px)';
-    setTimeout(() => node.remove(), 260);
-  }
-
-  /* ============================================================
-     INTERACTIVE WORKBENCH CONTROLLER
-     ============================================================ */
-  function wireWorkbench() {
-    const input = document.getElementById('v-input');
-    const checkBtn = document.getElementById('check-btn');
-    const clearBtn = document.getElementById('clear-btn');
-    const copyBtn = document.getElementById('copy-result');
-    const toggleVisBtn = document.getElementById('toggle-visibility');
-    const resultBox = document.getElementById('result-box');
-    const banner = document.getElementById('result-banner');
-    const metaBox = document.getElementById('result-meta');
-    const autoCheck = document.getElementById('auto-check');
-    const saveHistory = document.getElementById('save-history');
-    const charCount = document.getElementById('input-char-count');
-    const wbSelect = document.getElementById('wb-select');
-
-    const wbIcon = document.getElementById('wb-icon');
-    const wbTitle = document.getElementById('wb-title');
-    const wbDesc = document.getElementById('wb-desc');
-    const wbBadgeCat = document.getElementById('wb-badge-cat');
-    const wbBadgeSens = document.getElementById('wb-badge-sens');
-
-    const pwMeter = document.getElementById('pw-meter-wrap');
-    const pwFill = document.getElementById('pw-fill');
-    const pwText = document.getElementById('pw-strength-text');
-    const exHost = document.getElementById('example-chips');
-
-    function selectValidator(slug, initialValue) {
-      const v = (window.OVValidators && window.OVValidators[slug]) || window.OVValidators.email;
-      currentSlug = slug;
-
-      // Update Workbench Header
-      if (wbIcon) wbIcon.textContent = v.icon || '🔎';
-      if (wbTitle) wbTitle.textContent = `${v.name} Validator`;
-      if (wbDesc) wbDesc.textContent = v.help || '';
-      if (wbBadgeCat) wbBadgeCat.textContent = (v.category || 'text').toUpperCase();
-      if (wbBadgeSens) wbBadgeSens.classList.toggle('hidden', !v.sensitive);
-      if (wbSelect) wbSelect.value = slug;
-
-      // Setup Input Field
-      if (input) {
-        input.placeholder = v.placeholder || '';
-        input.type = v.sensitive ? 'password' : 'text';
-        input.value = (initialValue !== undefined) ? initialValue : '';
-        input.classList.remove('field-valid', 'field-invalid');
-      }
-
-      if (toggleVisBtn) toggleVisBtn.classList.toggle('hidden', !v.sensitive);
-      if (pwMeter) pwMeter.classList.toggle('hidden', !v.hasStrength);
-      if (pwFill) pwFill.style.width = '0%';
-      if (pwText) pwText.textContent = '';
-
-      // Highlight active card in validator directory
-      document.querySelectorAll('#validator-grid .validator-card').forEach(card => {
-        card.classList.toggle('active', card.dataset.validator === slug);
-      });
-
-      // Populate Live Example Chips
-      if (exHost && window.OVPages && window.OVPages.examplesFor) {
-        const examples = window.OVPages.examplesFor(slug);
-        exHost.innerHTML = examples.map(e =>
-          `<button type="button" class="ex-chip text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-mono border border-slate-700/80 transition hover:border-indigo-500/50">${escapeHtml(e)}</button>`
-        ).join('');
-
-        exHost.querySelectorAll('.ex-chip').forEach(chip => {
-          chip.addEventListener('click', () => {
-            if (input) {
-              input.value = chip.textContent;
-              updateCharCount();
-              run();
-            }
-          });
-        });
-      }
-
-      updateCharCount();
-
-      if (initialValue !== undefined && initialValue.length > 0) {
-        run();
-      } else {
-        if (resultBox) resultBox.classList.add('hidden');
-      }
-    }
-
-    function updateCharCount() {
-      if (charCount && input) {
-        const len = input.value.length;
-        charCount.textContent = `${len} character${len === 1 ? '' : 's'}`;
-      }
-    }
-
-    function run() {
-      if (!input) return;
-      const val = input.value;
-      const v = window.OVValidators && window.OVValidators[currentSlug];
-      if (!v) return;
-
-      const res = v.fn(val);
-
-      // Dynamic feedback border
-      input.classList.toggle('field-valid', res.valid);
-      input.classList.toggle('field-invalid', !res.valid);
-
-      renderResult(res, val);
-
-      if (saveHistory && saveHistory.checked && val.trim().length > 0) {
-        saveToHistory(currentSlug, val, res);
-      }
-
-      // Handle Password Strength Gauge
-      if (v.hasStrength && pwFill && pwText) {
-        if (res.valid && res.meta && res.meta.score !== undefined) {
-          const colors = ['#f43f5e', '#fb7185', '#f59e0b', '#fbbf24', '#10b981', '#34d399'];
-          const widths = [15, 30, 50, 70, 90, 100];
-          const score = Math.min(5, Math.max(0, res.meta.score));
-          pwFill.style.width = widths[score] + '%';
-          pwFill.style.backgroundColor = colors[score];
-          pwText.textContent = `${res.meta.strength} (${score}/5 score)`;
-          pwText.style.color = colors[score];
-        } else if (val.length > 0) {
-          pwFill.style.width = '15%';
-          pwFill.style.backgroundColor = '#f43f5e';
-          pwText.textContent = res.reason || 'Too weak';
-          pwText.style.color = '#f43f5e';
-        } else {
-          pwFill.style.width = '0%';
-          pwText.textContent = '';
-        }
-      }
-    }
-
-    function renderResult(res, val) {
-      if (!resultBox || !banner || !metaBox) return;
-      resultBox.classList.remove('hidden');
-
-      banner.className = 'rounded-xl p-4 flex items-start gap-3 border ' +
-        (res.valid ? 'result-ok' : 'result-fail');
-      banner.innerHTML = `
-        <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${res.valid ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'}">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="${res.valid ? 'M5 13l4 4L19 7' : 'M6 18L18 6M6 6l12 12'}"/>
-          </svg>
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="font-semibold text-base leading-tight ${res.valid ? 'text-emerald-200' : 'text-rose-200'}">${res.valid ? 'Valid Check Passed' : 'Validation Failed'}</p>
-          <p class="text-xs mt-1 leading-snug ${res.valid ? 'text-emerald-300/90' : 'text-rose-300/90'}">${res.reason || (res.valid ? 'Input satisfies all syntactic and semantic criteria.' : 'Input does not match required format.')}</p>
-        </div>
-        <span class="badge ${res.valid ? 'badge-success' : 'badge-error'} self-start">${res.valid ? 'PASS' : 'FAIL'}</span>
-      `;
-
-      // Build metadata property chips
-      const items = [
-        ['Input Length', `${val.length} characters`],
-        ['Validator Target', currentSlug],
-      ];
-
-      if (res.meta && typeof res.meta === 'object') {
-        Object.entries(res.meta).forEach(([k, v]) => {
-          items.push([k.replace(/([A-Z])/g, ' $1').toLowerCase(), String(v)]);
-        });
-      }
-
-      if (window.OVHash && typeof window.OVHash.encode === 'function' && val.length > 0) {
-        try {
-          const token = window.OVHash.encode(val);
-          const parts = token.split('$');
-          items.push(['Checksum Fingerprint', `${parts[0]}$…${(parts[parts.length-1] || '').slice(-8)}`]);
-        } catch (_) {}
-      }
-
-      metaBox.innerHTML = items.map(([k, v]) => `
-        <div class="meta-item">
-          <span class="k">${escapeHtml(k)}</span>
-          <span class="v">${escapeHtml(v)}</span>
-        </div>
-      `).join('');
-    }
-
-    function saveToHistory(slug, val, res) {
-      if (!val || !window.OVStore) return;
-      const key = 'history::anon';
-      const arr = window.OVStore.get(key, []) || [];
-      arr.unshift({
-        slug,
-        input: (slug === 'password' || slug === 'creditCard') ? '••••••••' : val.slice(0, 100),
-        valid: res.valid,
-        reason: res.reason || null,
-        ts: Date.now(),
-      });
-      window.OVStore.set(key, arr.slice(0, 150));
-      wireHistory();
-    }
-
-    // Event Listeners
-    checkBtn?.addEventListener('click', run);
-
-    clearBtn?.addEventListener('click', () => {
-      if (input) {
-        input.value = '';
-        input.classList.remove('field-valid', 'field-invalid');
-      }
-      if (resultBox) resultBox.classList.add('hidden');
-      if (pwFill) pwFill.style.width = '0%';
-      if (pwText) pwText.textContent = '';
-      updateCharCount();
-    });
-
-    input?.addEventListener('input', () => {
-      updateCharCount();
-      input.classList.remove('field-valid', 'field-invalid');
-      if (autoCheck && autoCheck.checked) {
-        run();
-      }
-    });
-
-    input?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        run();
-      }
-    });
-
-    copyBtn?.addEventListener('click', async () => {
-      if (!input || !input.value) return;
-      try {
-        await navigator.clipboard.writeText(input.value);
-        toast('success', 'Copied to Clipboard', input.value.slice(0, 32));
-      } catch (_) {
-        toast('warn', 'Copy Failed', 'Clipboard access denied.');
-      }
-    });
-
-    toggleVisBtn?.addEventListener('click', () => {
-      if (!input) return;
-      input.type = input.type === 'password' ? 'text' : 'password';
-    });
-
-    wbSelect?.addEventListener('change', (e) => {
-      selectValidator(e.target.value);
-    });
-
-    // Category pills click handler above the workbench
-    document.querySelectorAll('.wb-cat-pill').forEach(pill => {
+    pills.forEach(pill => {
       pill.addEventListener('click', () => {
-        document.querySelectorAll('.wb-cat-pill').forEach(p => p.classList.remove('active', 'btn-primary'));
-        pill.classList.add('active', 'btn-primary');
-        const cat = pill.dataset.cat;
-
-        // Select first validator in this category
-        const validators = Object.entries(window.OVValidators || {})
-          .filter(([k]) => !['range', 'regex', '_internal'].includes(k));
-
-        let match = validators.find(([k, v]) => cat === 'all' || v.category === cat || (cat === 'security' && v.sensitive));
-        if (match) selectValidator(match[0]);
+        pills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        currentAlgo = pill.dataset.algo;
+        if (spec) spec.textContent = ALGO_SPECS[currentAlgo] || '';
+        if (badge) badge.textContent = currentAlgo;
+        recalculateHash();
       });
     });
-
-    // Initialize with default 'email'
-    selectValidator('email');
-    activeWorkbenchRunner = selectValidator;
   }
 
   /* ============================================================
-     VALIDATOR DIRECTORY GRID & SEARCH FILTER
+     STEP 2: FIELD SELECTION (1, 2, or Multiple)
      ============================================================ */
-  function wireValidatorGrid() {
-    const grid = document.getElementById('validator-grid');
-    const search = document.getElementById('search');
-    const filter = document.getElementById('filter');
-    if (!grid) return;
+  function wireFieldSelection() {
+    const modePills = document.querySelectorAll('#mode-pills .pill-tab');
+    const cb2 = document.getElementById('check-field-2');
+    const cb3 = document.getElementById('check-field-3');
+    const wrap2 = document.getElementById('field-wrap-2');
+    const wrap3 = document.getElementById('field-wrap-3');
+    const combineWrap = document.getElementById('combine-wrap');
+    const combineSelect = document.getElementById('combine-mode');
 
-    // Card click selects validator in workbench and scrolls to it
-    grid.querySelectorAll('.validator-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const slug = card.dataset.validator;
-        if (activeWorkbenchRunner) {
-          activeWorkbenchRunner(slug);
-          const wb = document.getElementById('workbench');
-          if (wb) wb.scrollIntoView({ behavior: 'smooth' });
-          const inp = document.getElementById('v-input');
-          if (inp) setTimeout(() => inp.focus(), 300);
+    function updateFieldVisibility() {
+      const has2 = cb2?.checked;
+      const has3 = cb3?.checked;
+
+      if (wrap2) wrap2.classList.toggle('hidden', !has2);
+      if (wrap3) wrap3.classList.toggle('hidden', !has3);
+
+      const count = 1 + (has2 ? 1 : 0) + (has3 ? 1 : 0);
+      activeFieldsCount = count;
+
+      if (combineWrap) combineWrap.classList.toggle('hidden', count < 2);
+
+      // Update mode pills active state
+      modePills.forEach(p => {
+        const m = p.dataset.mode;
+        if (m === '1') p.classList.toggle('active', count === 1);
+        else if (m === '2') p.classList.toggle('active', count === 2 && !has3);
+        else if (m === 'multi') p.classList.toggle('active', count >= 3);
+      });
+
+      recalculateHash();
+    }
+
+    modePills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        const mode = pill.dataset.mode;
+        if (mode === '1') {
+          if (cb2) cb2.checked = false;
+          if (cb3) cb3.checked = false;
+        } else if (mode === '2') {
+          if (cb2) cb2.checked = true;
+          if (cb3) cb3.checked = false;
+        } else if (mode === 'multi') {
+          if (cb2) cb2.checked = true;
+          if (cb3) cb3.checked = true;
         }
+        updateFieldVisibility();
       });
     });
 
-    const filterCards = () => {
-      const q = (search ? search.value : '').toLowerCase().trim();
-      const f = filter ? filter.value : 'all';
+    cb2?.addEventListener('change', updateFieldVisibility);
+    cb3?.addEventListener('change', updateFieldVisibility);
+    combineSelect?.addEventListener('change', recalculateHash);
+  }
 
-      grid.querySelectorAll('.validator-card').forEach(card => {
-        const slug = card.dataset.validator;
-        const category = card.dataset.category || 'text';
-        const v = window.OVValidators && window.OVValidators[slug];
-        if (!v) return;
+  /* ============================================================
+     STEP 3: INPUTS & HASH RECALCULATION
+     ============================================================ */
+  function wireInputsAndHashing() {
+    const val1 = document.getElementById('val-1');
+    const val2 = document.getElementById('val-2');
+    const val3 = document.getElementById('val-3');
+    const cnt1 = document.getElementById('char-count-1');
+    const cnt2 = document.getElementById('char-count-2');
+    const cnt3 = document.getElementById('char-count-3');
+    const btnSample = document.getElementById('btn-sample');
+    const btnClear = document.getElementById('btn-clear');
 
-        const text = `${v.name} ${v.help} ${slug} ${category}`.toLowerCase();
-        const matchesQuery = !q || text.includes(q);
-        const matchesFilter = (f === 'all') ||
-          (f === 'security' && (category === 'security' || v.sensitive)) ||
-          (f === category);
-
-        card.style.display = matchesQuery && matchesFilter ? '' : 'none';
-      });
+    const updateCounts = () => {
+      if (cnt1 && val1) cnt1.textContent = `${val1.value.length} chars`;
+      if (cnt2 && val2) cnt2.textContent = `${val2.value.length} chars`;
+      if (cnt3 && val3) cnt3.textContent = `${val3.value.length} chars`;
     };
 
-    search?.addEventListener('input', filterCards);
-    filter?.addEventListener('change', filterCards);
+    [val1, val2, val3].forEach(input => {
+      if (!input) return;
+      input.addEventListener('input', () => {
+        updateCounts();
+        recalculateHash();
+      });
+    });
+
+    btnSample?.addEventListener('click', () => {
+      if (val1) val1.value = 'Offline Validator 2026';
+      if (val2) val2.value = 'secret_salt_key_42';
+      if (val3) val3.value = 'extra_token_param';
+      updateCounts();
+      recalculateHash();
+      toast('SAMPLE LOADED', 'Populated test values into active fields.');
+    });
+
+    btnClear?.addEventListener('click', () => {
+      if (val1) val1.value = '';
+      if (val2) val2.value = '';
+      if (val3) val3.value = '';
+      updateCounts();
+      recalculateHash();
+      toast('CLEARED', 'Inputs emptied.');
+    });
   }
 
   /* ============================================================
-     HASH PLAYGROUND
+     CRYPTOGRAPHIC HASH COMPUTATION
      ============================================================ */
-  function wireHashPlayground() {
-    const modeText = document.getElementById('hp-mode-text');
-    const modeStruct = document.getElementById('hp-mode-struct');
-    const encText = document.getElementById('hp-encoder-text');
-    const encStruct = document.getElementById('hp-encoder-struct');
+  async function recalculateHash() {
+    const val1 = document.getElementById('val-1')?.value || '';
+    const val2 = document.getElementById('val-2')?.value || '';
+    const val3 = document.getElementById('val-3')?.value || '';
+    const cb2 = document.getElementById('check-field-2')?.checked;
+    const cb3 = document.getElementById('check-field-3')?.checked;
+    const combineMode = document.getElementById('combine-mode')?.value || 'salted';
+    const outputEl = document.getElementById('hash-output');
+    const lenEl = document.getElementById('hash-length');
 
-    const encIn = document.getElementById('hp-input');
-    const encSalt = document.getElementById('hp-salt');
-    const encBtn = document.getElementById('hp-encode-btn');
-    const encSample = document.getElementById('hp-sample');
-    const encOut = document.getElementById('hp-output');
-    const encCopy = document.getElementById('hp-copy');
-
-    const structFields = document.getElementById('hp-struct-fields');
-    const structGen = document.getElementById('hp-struct-generate');
-    const structSample = document.getElementById('hp-struct-sample');
-    const structDl = document.getElementById('hp-struct-download');
-    const structOut = document.getElementById('hp-struct-output');
-    const structCopy = document.getElementById('hp-struct-copy');
-    const structSize = document.getElementById('hp-struct-size');
-    const structCksum = document.getElementById('hp-struct-checksum');
-    const structBits = document.getElementById('hp-struct-bits');
-
-    const decIn = document.getElementById('hp-token');
-    const decBtn = document.getElementById('hp-decode-btn');
-    const swapBtn = document.getElementById('hp-swap');
-    const fileIn = document.getElementById('hp-file');
-    const dropZone = document.getElementById('hp-drop-zone');
-    const decWrap = document.getElementById('hp-decoded-wrap');
-    const decBanner = document.getElementById('hp-decoded-banner');
-    const decFields = document.getElementById('hp-decoded-fields');
-    const decRaw = document.getElementById('hp-decoded-raw');
-
-    let lastLicensePayload = null;
-
-    // Mode toggling
-    modeText?.addEventListener('click', () => {
-      encText?.classList.remove('hidden');
-      encStruct?.classList.add('hidden');
-      modeText.className = 'hp-mode-btn px-4 py-2 rounded-lg text-sm font-semibold text-white bg-slate-700/50';
-      modeStruct.className = 'hp-mode-btn px-4 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition';
-    });
-
-    modeStruct?.addEventListener('click', () => {
-      encText?.classList.add('hidden');
-      encStruct?.classList.remove('hidden');
-      modeStruct.className = 'hp-mode-btn px-4 py-2 rounded-lg text-sm font-semibold text-white bg-slate-700/50';
-      modeText.className = 'hp-mode-btn px-4 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition';
-    });
-
-    // v1 Plain Text Encode
-    function runTextEncode() {
-      if (!encIn || !encOut) return;
-      const text = encIn.value;
-      const salt = (encSalt?.value || '').trim();
-      if (!text) { encOut.value = ''; return; }
-
-      try {
-        const token = window.OVHash.encode(text, salt || undefined);
-        encOut.value = token;
-        toast('success', 'Token Encoded', `${token.length} chars (v1)`);
-      } catch (e) {
-        encOut.value = 'Error: ' + e.message;
-        toast('error', 'Encoding Failed', e.message);
-      }
+    if (!val1 && (!cb2 || !val2) && (!cb3 || !val3)) {
+      if (outputEl) outputEl.innerHTML = '<span class="text-neutral-500 font-normal">Hash will generate automatically as you type…</span>';
+      if (lenEl) lenEl.textContent = '0 chars';
+      currentHexHash = '';
+      rawHashBytes = null;
+      checkCompareMatch();
+      return;
     }
 
-    encBtn?.addEventListener('click', runTextEncode);
-    encSample?.addEventListener('click', () => {
-      if (encIn) encIn.value = 'Offline Validator 2026 🔐 Privacy-First Client Validation';
-      runTextEncode();
-    });
-
-    encCopy?.addEventListener('click', async () => {
-      if (!encOut || !encOut.value) return;
-      try {
-        await navigator.clipboard.writeText(encOut.value);
-        toast('success', 'Token Copied');
-      } catch (_) {}
-    });
-
-    // v2 Structured Encode
-    function updateStructBits() {
-      if (!structFields || !structBits) return;
-      let count = 0;
-      structFields.querySelectorAll('.struct-field').forEach(row => {
-        if (row.querySelector('.struct-included')?.checked) count++;
-      });
-      structBits.textContent = `${count}/8 fields`;
-    }
-
-    structFields?.querySelectorAll('.struct-included').forEach(cb => {
-      cb.addEventListener('change', updateStructBits);
-    });
-
-    function runStructGenerate() {
-      if (!structFields || !structOut) return;
-      const obj = {};
-      structFields.querySelectorAll('.struct-field').forEach(row => {
-        const cb = row.querySelector('.struct-included');
-        const inp = row.querySelector('.struct-input');
-        const key = row.dataset.key;
-        if (cb && cb.checked && inp && inp.value.trim()) {
-          const val = inp.value.trim();
-          if (inp.dataset.kind === 'uint') {
-            obj[key] = parseInt(val, 10) || 0;
-          } else if (inp.dataset.kind === 'flags') {
-            obj[key] = val.split(',').map(s => s.trim()).filter(Boolean);
-          } else {
-            obj[key] = val;
-          }
-        }
-      });
-
-      const required = ['entity', 'product', 'version', 'issued', 'serial'];
-      const missing = required.filter(k => obj[k] === undefined || obj[k] === '');
-      if (missing.length > 0) {
-        toast('warn', 'Missing Fields', missing.join(', '));
+    try {
+      // 1. Reversible v1 Token
+      if (currentAlgo === 'v1-token') {
+        const salt = (cb2 && val2) ? val2 : undefined;
+        const token = window.OVHash.encode(val1, salt);
+        renderOutput(token, 'token');
         return;
       }
 
-      try {
-        const r = window.OVHash.structEncode(obj);
-        structOut.value = r.token;
-        if (structSize) structSize.textContent = `${r.token.length} chars`;
-        if (structCksum) structCksum.textContent = `fnv=${r.checksum}`;
-        if (structDl) {
-          structDl.disabled = false;
-          lastLicensePayload = window.OVHash.makeLicenseFile(obj);
-        }
-        toast('success', 'v2 Token Generated', `${r.token.length} chars`);
-      } catch (e) {
-        toast('error', 'Generation Error', e.message);
+      // 2. Reversible v2 Token
+      if (currentAlgo === 'v2-token') {
+        const payload = {
+          entity: val1 || 'user_anonymous',
+          product: 'offline-validator-suite',
+          version: 1,
+          issued: Math.floor(Date.now() / 1000),
+          serial: (cb2 && val2) ? val2 : 'LIC-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
+        };
+        const r = window.OVHash.structEncode(payload);
+        renderOutput(r.token, 'token');
+        return;
+      }
+
+      // Combine values according to field settings and combineMode
+      let combinedData = val1;
+      if (cb2 && cb3) {
+        if (combineMode === 'colon') combinedData = `${val1}:${val2}:${val3}`;
+        else if (combineMode === 'concat') combinedData = `${val1}${val2}${val3}`;
+        else if (combineMode === 'newline') combinedData = `${val1}\n${val2}\n${val3}`;
+        else combinedData = `${val1}${val2}${val3}`; // salted default
+      } else if (cb2) {
+        if (combineMode === 'colon') combinedData = `${val1}:${val2}`;
+        else if (combineMode === 'concat') combinedData = `${val1}${val2}`;
+        else if (combineMode === 'newline') combinedData = `${val1}\n${val2}`;
+        else combinedData = `${val1}${val2}`; // salted: value 1 + value 2
+      }
+
+      // 3. FNV-1a (32-bit)
+      if (currentAlgo === 'FNV-1a') {
+        const chk = window.OVHash.checksum32(combinedData);
+        renderOutput(chk, 'hex');
+        return;
+      }
+
+      // 4. MD5 (RFC 1321 pure JS)
+      if (currentAlgo === 'MD5') {
+        const hex = computeMD5(combinedData);
+        renderOutput(hex, 'hex');
+        return;
+      }
+
+      // 5. Standard WebCrypto Hashes (SHA-256, SHA-512, SHA-1)
+      const encoder = new TextEncoder();
+      const dataBytes = encoder.encode(combinedData);
+      const buffer = await crypto.subtle.digest(currentAlgo, dataBytes);
+      rawHashBytes = new Uint8Array(buffer);
+
+      const hex = Array.from(rawHashBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+      renderOutput(hex, 'hex');
+
+    } catch (err) {
+      if (outputEl) outputEl.textContent = 'Error: ' + err.message;
+    }
+  }
+
+  function renderOutput(resultStr, type) {
+    const outputEl = document.getElementById('hash-output');
+    const lenEl = document.getElementById('hash-length');
+
+    currentHexHash = resultStr;
+
+    let displayStr = resultStr;
+    if (type === 'hex') {
+      if (isBase64 && rawHashBytes) {
+        displayStr = btoa(String.fromCharCode.apply(null, rawHashBytes));
+      } else if (isUppercase) {
+        displayStr = resultStr.toUpperCase();
+      } else {
+        displayStr = resultStr.toLowerCase();
       }
     }
 
-    structGen?.addEventListener('click', runStructGenerate);
+    if (outputEl) outputEl.textContent = displayStr;
+    if (lenEl) lenEl.textContent = `${displayStr.length} chars`;
 
-    structSample?.addEventListener('click', () => {
-      const now = Math.floor(Date.now() / 1000);
-      const sampleData = {
-        entity: 'usr_enterprise_' + Math.floor(Math.random() * 9000 + 1000),
-        product: 'offline-validator-suite',
-        version: 2,
-        issued: now,
-        expires: now + (365 * 24 * 60 * 60),
-        plan: 'enterprise',
-        flags: 'api,export,audit_trail,pro',
-        serial: 'LIC-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
-      };
+    checkCompareMatch();
+  }
 
-      structFields?.querySelectorAll('.struct-field').forEach(row => {
-        const key = row.dataset.key;
-        const inp = row.querySelector('.struct-input');
-        const cb = row.querySelector('.struct-included');
-        if (cb && !cb.disabled) cb.checked = true;
-        if (inp && sampleData[key] !== undefined) inp.value = sampleData[key];
-      });
+  /* ============================================================
+     STEP 4: OUTPUT TOOLBAR (Copy, Case, Format)
+     ============================================================ */
+  function wireOutputActions() {
+    const btnCopy = document.getElementById('btn-copy');
+    const btnCase = document.getElementById('btn-case');
+    const btnFormat = document.getElementById('btn-format');
+    const outputEl = document.getElementById('hash-output');
 
-      updateStructBits();
-      runStructGenerate();
-    });
-
-    structDl?.addEventListener('click', () => {
-      if (!lastLicensePayload) return;
-      const blob = new Blob([JSON.stringify(lastLicensePayload, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${lastLicensePayload.payload?.serial || 'license'}.ovlicense`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      toast('success', 'License Downloaded', a.download);
-    });
-
-    structCopy?.addEventListener('click', async () => {
-      if (!structOut || !structOut.value) return;
+    btnCopy?.addEventListener('click', async () => {
+      const text = outputEl?.textContent || '';
+      if (!text || text.includes('Hash will generate')) return;
       try {
-        await navigator.clipboard.writeText(structOut.value);
-        toast('success', 'Token Copied');
-      } catch (_) {}
+        await navigator.clipboard.writeText(text);
+        toast('COPIED', text.slice(0, 24) + '…');
+      } catch (_) {
+        toast('FAILED', 'Clipboard access denied.');
+      }
     });
 
-    // Universal Decoder
-    function runDecode() {
-      if (!decIn || !decWrap) return;
+    btnCase?.addEventListener('click', () => {
+      isUppercase = !isUppercase;
+      btnCase.textContent = isUppercase ? 'LOWERCASE' : 'UPPERCASE';
+      recalculateHash();
+    });
+
+    btnFormat?.addEventListener('click', () => {
+      if (currentAlgo.startsWith('v')) {
+        toast('INFO', 'Tokens are already Base64URL encoded.');
+        return;
+      }
+      isBase64 = !isBase64;
+      btnFormat.textContent = isBase64 ? 'HEX' : 'BASE64';
+      recalculateHash();
+    });
+  }
+
+  /* ============================================================
+     STEP 5: VERIFY / COMPARE HASH
+     ============================================================ */
+  function wireComparison() {
+    const compInput = document.getElementById('val-compare');
+    compInput?.addEventListener('input', checkCompareMatch);
+  }
+
+  function checkCompareMatch() {
+    const compInput = document.getElementById('val-compare');
+    const badge = document.getElementById('match-badge');
+    const outputEl = document.getElementById('hash-output');
+    if (!compInput || !badge || !outputEl) return;
+
+    const val = compInput.value.trim();
+    const current = outputEl.textContent.trim();
+
+    if (!val || !current || current.includes('Hash will generate')) {
+      badge.classList.add('hidden');
+      return;
+    }
+
+    badge.classList.remove('hidden');
+    const isMatch = val.toLowerCase() === current.toLowerCase();
+
+    if (isMatch) {
+      badge.textContent = 'MATCH ✓';
+      badge.className = 'badge-mono badge-mono-invert text-[10px]';
+    } else {
+      badge.textContent = 'MISMATCH ✗';
+      badge.className = 'badge-mono text-[10px] border-neutral-600 text-neutral-400';
+    }
+  }
+
+  /* ============================================================
+     STEP 6: UNIVERSAL TOKEN DECODER
+     ============================================================ */
+  function wireDecoder() {
+    const decIn = document.getElementById('token-decode-input');
+    const decBtn = document.getElementById('btn-decode-run');
+    const decResult = document.getElementById('token-decode-result');
+
+    decBtn?.addEventListener('click', () => {
+      if (!decIn || !decResult) return;
       const raw = decIn.value.trim();
-      if (!raw) { decWrap.classList.add('hidden'); return; }
+      if (!raw) {
+        decResult.classList.add('hidden');
+        return;
+      }
 
-      decWrap.classList.remove('hidden');
+      decResult.classList.remove('hidden');
 
-      // 1. JSON License file (.ovlicense or standard JSON)
+      // 1. JSON License file
       if (raw.startsWith('{')) {
         try {
           const json = JSON.parse(raw);
           if (json.token && json.payload) {
             const r = window.OVHash.structDecode(json.token);
             if (r) {
-              renderDecodeResult(true, 'Verified .ovlicense File', json.payload, 'Checksum verified · Tamper-free');
+              renderDecoded('VERIFIED .ovlicense FILE', json.payload);
               return;
             }
           }
         } catch (_) {}
-        renderDecodeResult(false, 'Corrupt JSON File', null, 'Failed JSON validation or token integrity.');
-        return;
       }
 
-      // 2. Structured text headers (.ovstruct or .ovhash)
-      if (raw.startsWith('OV-STRUCT') || raw.startsWith('OV-HASH')) {
-        if (window.OVFileIO && typeof window.OVFileIO.parseAndDecode === 'function') {
-          const pad = window.OVFileIO.parseAndDecode(raw);
-          if (pad && pad.valid) {
-            const isStruct = pad.header && pad.header._kind === 'ovstruct';
-            renderDecodeResult(true, `Verified ${isStruct ? '.ovstruct' : '.ovhash'} File`, pad.decoded || pad.header, 'Checksum verified · Tamper-free');
-            return;
-          } else {
-            renderDecodeResult(false, 'File Decode Failed', null, (pad && pad.errors && pad.errors.join(', ')) || 'Integrity check failed');
-            return;
-          }
-        }
-      }
-
-      // 3. v2 structured token (ov2s$)
+      // 2. v2 structured token (ov2s$)
       if (raw.startsWith('ov2s$')) {
         const r = window.OVHash.structDecode(raw);
         if (r && r.payload) {
-          renderDecodeResult(true, 'v2 Structured Payload', r.payload, `Integrity verified · ${r.checksum}`);
-        } else {
-          renderDecodeResult(false, 'Invalid v2 Token', null, 'Token checksum mismatch or corrupted data.');
+          renderDecoded('v2 STRUCTURED PAYLOAD', r.payload);
+          return;
         }
-        return;
       }
 
-      // 4. v1 plain text token (v1$)
+      // 3. v1 plain text token (v1$)
       if (raw.startsWith('v1$')) {
         const plain = window.OVHash.decode(raw);
         if (plain !== null) {
-          renderDecodeResult(true, 'v1 Plain Text Token', { decodedText: plain }, 'Checksum matched · Reversible format');
-        } else {
-          renderDecodeResult(false, 'Invalid v1 Token', null, 'Token checksum mismatch or corrupt payload.');
+          const parts = raw.split('$');
+          renderDecoded('v1 REVERSIBLE TOKEN', {
+            'value1_data': plain,
+            'value2_salt': parts[1] || '(none)',
+            'checksum': parts[2] || '',
+          });
+          return;
         }
-        return;
       }
 
-      renderDecodeResult(false, 'Unrecognized Format', null, 'Token must begin with v1$, ov2s$, OV-STRUCT, OV-HASH, or contain a valid JSON license.');
-    }
-
-    function renderDecodeResult(ok, title, data, subtitle) {
-      if (!decBanner || !decFields || !decRaw) return;
-
-      decBanner.className = 'rounded-xl p-3 flex items-center gap-2.5 border ' +
-        (ok ? 'result-ok' : 'result-fail');
-      decBanner.innerHTML = `
-        <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${ok ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="${ok ? 'M5 13l4 4L19 7' : 'M6 18L18 6M6 6l12 12'}"/>
-          </svg>
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="font-semibold text-sm ${ok ? 'text-emerald-200' : 'text-rose-200'}">${escapeHtml(title)}</p>
-          <p class="text-[11px] ${ok ? 'text-emerald-300/80' : 'text-rose-300/80'}">${escapeHtml(subtitle)}</p>
-        </div>
-      `;
-
-      if (ok && data) {
-        const filtered = Object.entries(data).filter(([k]) => !k.startsWith('_') && k !== 'token');
-        decFields.innerHTML = filtered.map(([k, v]) => `
-          <div class="meta-item">
-            <span class="k">${escapeHtml(k)}</span>
-            <span class="v">${escapeHtml(Array.isArray(v) ? v.join(', ') : String(v))}</span>
-          </div>
-        `).join('');
-        decRaw.textContent = JSON.stringify(data, null, 2);
-      } else {
-        decFields.innerHTML = '';
-        decRaw.textContent = '';
-      }
-    }
-
-    decBtn?.addEventListener('click', runDecode);
-    decIn?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        runDecode();
-      }
+      decResult.innerHTML = '<span class="text-neutral-400">Invalid or corrupted token. Check format.</span>';
     });
 
-    swapBtn?.addEventListener('click', () => {
-      const src = (structOut && structOut.value) ? structOut.value : (encOut ? encOut.value : '');
-      if (src && decIn) {
-        decIn.value = src;
-        runDecode();
-        toast('info', 'Loaded Token into Decoder');
-      }
-    });
-
-    fileIn?.addEventListener('change', async () => {
-      const f = fileIn.files?.[0];
-      if (!f || !decIn) return;
-      const text = await f.text();
-      decIn.value = text;
-      runDecode();
-      toast('info', 'File Loaded', f.name);
-    });
-
-    // Drag and drop zone
-    if (dropZone) {
-      ['dragenter', 'dragover'].forEach(ev => {
-        dropZone.addEventListener(ev, (e) => {
-          e.preventDefault();
-          dropZone.classList.add('drag-over');
-        });
+    function renderDecoded(title, data) {
+      let html = `<div class="font-bold text-white mb-2 pb-1 border-b border-neutral-800">${escapeHtml(title)}</div>`;
+      Object.entries(data).forEach(([k, v]) => {
+        html += `<div class="flex justify-between gap-2 py-0.5"><span class="text-neutral-400">${escapeHtml(k)}:</span><span class="text-white">${escapeHtml(Array.isArray(v) ? v.join(', ') : String(v))}</span></div>`;
       });
-      ['dragleave', 'drop'].forEach(ev => {
-        dropZone.addEventListener(ev, (e) => {
-          e.preventDefault();
-          dropZone.classList.remove('drag-over');
-        });
-      });
-      dropZone.addEventListener('drop', async (e) => {
-        const f = e.dataTransfer?.files?.[0];
-        if (!f || !decIn) return;
-        const text = await f.text();
-        decIn.value = text;
-        runDecode();
-        toast('info', 'File Dropped & Decoded', f.name);
-      });
+      decResult.innerHTML = html;
     }
   }
 
   /* ============================================================
-     AUDIT TRAIL LOG (History)
+     TOAST SYSTEM
      ============================================================ */
-  function wireHistory() {
-    const tbody = document.getElementById('history-tbody');
-    const emptyState = document.getElementById('history-empty');
-    const exportBtn = document.getElementById('export-btn');
-    const clearBtn = document.getElementById('clear-history');
-    if (!tbody) return;
+  function toast(title, msg) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
 
-    const items = (window.OVStore && window.OVStore.get('history::anon', [])) || [];
+    const el = document.createElement('div');
+    el.className = 'toast-mono opacity-0 translate-y-2 transition-all duration-200';
+    el.innerHTML = `
+      <div>
+        <span class="font-bold text-white">${escapeHtml(title)}</span>
+        ${msg ? `<span class="text-neutral-400 ml-1.5 text-xs">${escapeHtml(msg)}</span>` : ''}
+      </div>
+    `;
+    container.appendChild(el);
 
-    if (items.length === 0) {
-      tbody.innerHTML = '';
-      if (emptyState) emptyState.classList.remove('hidden');
-      return;
-    }
-
-    if (emptyState) emptyState.classList.add('hidden');
-
-    tbody.innerHTML = items.map((it, idx) => {
-      const v = (window.OVValidators && window.OVValidators[it.slug]) || { name: it.slug, icon: '🔎' };
-      const when = new Date(it.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · ' + new Date(it.ts).toLocaleDateString();
-      return `
-        <tr class="hover:bg-slate-900/40 transition">
-          <td class="px-5 py-3.5">
-            <div class="flex items-center gap-2.5">
-              <span class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700/80 flex items-center justify-center text-sm">${v.icon || '🔎'}</span>
-              <div>
-                <p class="font-medium text-sm text-slate-200">${escapeHtml(v.name)}</p>
-                <p class="text-[10px] text-slate-400 font-mono">${escapeHtml(it.slug)}</p>
-              </div>
-            </div>
-          </td>
-          <td class="px-5 py-3.5 font-mono text-xs text-slate-300 max-w-[240px] truncate">${escapeHtml(it.input)}</td>
-          <td class="px-5 py-3.5">
-            <span class="badge ${it.valid ? 'badge-success' : 'badge-error'} text-[10px]">${it.valid ? 'PASS' : 'FAIL'}</span>
-          </td>
-          <td class="px-5 py-3.5 text-xs text-slate-400">${when}</td>
-          <td class="px-5 py-3.5 text-right">
-            <button type="button" data-idx="${idx}" class="re-run btn btn-secondary btn-sm text-xs">
-              Re-test
-            </button>
-          </td>
-        </tr>
-      `;
-    }).join('');
-
-    tbody.querySelectorAll('.re-run').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const item = items[+btn.dataset.idx];
-        if (item && activeWorkbenchRunner) {
-          const inpVal = item.input === '••••••••' ? '' : item.input;
-          activeWorkbenchRunner(item.slug, inpVal);
-          const wb = document.getElementById('workbench');
-          if (wb) wb.scrollIntoView({ behavior: 'smooth' });
-          toast('info', 'Loaded into Workbench', `${item.slug}: ${inpVal || '(sensitive)'}`);
-        }
-      });
+    requestAnimationFrame(() => {
+      el.classList.remove('opacity-0', 'translate-y-2');
     });
 
-    exportBtn?.addEventListener('click', () => {
-      const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `validation-audit-log-${Date.now()}.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      toast('success', 'Audit Log Exported', `${items.length} records`);
-    });
-
-    clearBtn?.addEventListener('click', () => {
-      if (!confirm('Clear all stored validation history?')) return;
-      if (window.OVStore) window.OVStore.remove('history::anon');
-      wireHistory();
-      toast('info', 'Audit Log Cleared');
-    });
+    setTimeout(() => {
+      el.classList.add('opacity-0', 'translate-y-2');
+      setTimeout(() => el.remove(), 200);
+    }, 3000);
   }
 
   function escapeHtml(s) {
@@ -987,12 +506,128 @@
     }[c]));
   }
 
-  // Expose global controller API
-  window.OVApp = {
-    toast,
-    refreshHistory: wireHistory,
-    selectValidator: (slug, initialVal) => {
-      if (activeWorkbenchRunner) activeWorkbenchRunner(slug, initialVal);
+  /* ============================================================
+     RFC 1321 PURE JS MD5 (Offline & Zero-Dependency)
+     ============================================================ */
+  function computeMD5(str) {
+    function safeAdd(x, y) {
+      const lsw = (x & 0xffff) + (y & 0xffff);
+      const msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+      return (msw << 16) | (lsw & 0xffff);
     }
+    function bitRotateLeft(num, cnt) {
+      return (num << cnt) | (num >>> (32 - cnt));
+    }
+    function md5cmn(q, a, b, x, s, t) {
+      return safeAdd(bitRotateLeft(safeAdd(safeAdd(a, q), safeAdd(x, t)), s), b);
+    }
+    function md5ff(a, b, c, d, x, s, t) { return md5cmn((b & c) | (~b & d), a, b, x, s, t); }
+    function md5gg(a, b, c, d, x, s, t) { return md5cmn((b & d) | (c & ~d), a, b, x, s, t); }
+    function md5hh(a, b, c, d, x, s, t) { return md5cmn(b ^ c ^ d, a, b, x, s, t); }
+    function md5ii(a, b, c, d, x, s, t) { return md5cmn(c ^ (b | ~d), a, b, x, s, t); }
+
+    const utf8 = unescape(encodeURIComponent(str));
+    const n = utf8.length;
+    const words = [];
+    for (let i = 0; i < n; i++) {
+      words[i >> 2] |= (utf8.charCodeAt(i) & 0xff) << ((i % 4) * 8);
+    }
+    words[n >> 2] |= 0x80 << ((n % 4) * 8);
+    words[(((n + 8) >> 6) << 4) + 14] = n * 8;
+
+    let a = 1732584193, b = -271733879, c = -1732584194, d = 271733878;
+    for (let i = 0; i < words.length; i += 16) {
+      const olda = a, oldb = b, oldc = c, oldd = d;
+      a = md5ff(a, b, c, d, words[i] || 0, 7, -680876936);
+      d = md5ff(d, a, b, c, words[i + 1] || 0, 12, -389564586);
+      c = md5ff(c, d, a, b, words[i + 2] || 0, 17, 606105819);
+      b = md5ff(b, c, d, a, words[i + 3] || 0, 22, -1044525330);
+      a = md5ff(a, b, c, d, words[i + 4] || 0, 7, -176418897);
+      d = md5ff(d, a, b, c, words[i + 5] || 0, 12, 1200080426);
+      c = md5ff(c, d, a, b, words[i + 6] || 0, 17, -1473231341);
+      b = md5ff(b, c, d, a, words[i + 7] || 0, 22, -45705983);
+      a = md5ff(a, b, c, d, words[i + 8] || 0, 7, 1770035416);
+      d = md5ff(d, a, b, c, words[i + 9] || 0, 12, -1958414417);
+      c = md5ff(c, d, a, b, words[i + 10] || 0, 17, -42063);
+      b = md5ff(b, c, d, a, words[i + 11] || 0, 22, -1990404162);
+      a = md5ff(a, b, c, d, words[i + 12] || 0, 7, 1804603682);
+      d = md5ff(d, a, b, c, words[i + 13] || 0, 12, -40341101);
+      c = md5ff(c, d, a, b, words[i + 14] || 0, 17, -1502002290);
+      b = md5ff(b, c, d, a, words[i + 15] || 0, 22, 1236535329);
+
+      a = md5gg(a, b, c, d, words[i + 1] || 0, 5, -165796510);
+      d = md5gg(d, a, b, c, words[i + 6] || 0, 9, -1069501632);
+      c = md5gg(c, d, a, b, words[i + 11] || 0, 14, 643717713);
+      b = md5gg(b, c, d, a, words[i] || 0, 20, -373897302);
+      a = md5gg(a, b, c, d, words[i + 5] || 0, 5, -701558691);
+      d = md5gg(d, a, b, c, words[i + 10] || 0, 9, 38016083);
+      c = md5gg(c, d, a, b, words[i + 15] || 0, 14, -660478335);
+      b = md5gg(b, c, d, a, words[i + 4] || 0, 20, -405537848);
+      a = md5gg(a, b, c, d, words[i + 9] || 0, 5, 568446438);
+      d = md5gg(d, a, b, c, words[i + 14] || 0, 9, -1019803690);
+      c = md5gg(c, d, a, b, words[i + 3] || 0, 14, -187363961);
+      b = md5gg(b, c, d, a, words[i + 8] || 0, 20, 1163531501);
+      a = md5gg(a, b, c, d, words[i + 13] || 0, 5, -1444681467);
+      d = md5gg(d, a, b, c, words[i + 2] || 0, 9, -51403784);
+      c = md5gg(c, d, a, b, words[i + 7] || 0, 14, 1735328473);
+      b = md5gg(b, c, d, a, words[i + 12] || 0, 20, -1926607734);
+
+      a = md5hh(a, b, c, d, words[i + 5] || 0, 4, -378558);
+      d = md5hh(d, a, b, c, words[i + 8] || 0, 11, -2022574463);
+      c = md5hh(c, d, a, b, words[i + 11] || 0, 16, 1839030562);
+      b = md5hh(b, c, d, a, words[i + 14] || 0, 23, -35309556);
+      a = md5hh(a, b, c, d, words[i + 1] || 0, 4, -1530992060);
+      d = md5hh(d, a, b, c, words[i + 4] || 0, 11, 1272893353);
+      c = md5hh(c, d, a, b, words[i + 7] || 0, 16, -155497632);
+      b = md5hh(b, c, d, a, words[i + 10] || 0, 23, -1094730640);
+      a = md5hh(a, b, c, d, words[i + 13] || 0, 4, 681279174);
+      d = md5hh(d, a, b, c, words[i] || 0, 11, -358537222);
+      c = md5hh(c, d, a, b, words[i + 3] || 0, 16, -722521979);
+      b = md5hh(b, c, d, a, words[i + 6] || 0, 23, 76029189);
+      a = md5hh(a, b, c, d, words[i + 9] || 0, 4, -640364487);
+      d = md5hh(d, a, b, c, words[i + 12] || 0, 11, -421815835);
+      c = md5hh(c, d, a, b, words[i + 15] || 0, 16, 530742520);
+      b = md5hh(b, c, d, a, words[i + 2] || 0, 23, -995338651);
+
+      a = md5ii(a, b, c, d, words[i] || 0, 6, -198630844);
+      d = md5ii(d, a, b, c, words[i + 7] || 0, 10, 1126891415);
+      c = md5ii(c, d, a, b, words[i + 14] || 0, 15, -1416354905);
+      b = md5ii(b, c, d, a, words[i + 5] || 0, 21, -57434055);
+      a = md5ii(a, b, c, d, words[i + 12] || 0, 6, 1700485571);
+      d = md5ii(d, a, b, c, words[i + 3] || 0, 10, -1894986606);
+      c = md5ii(c, d, a, b, words[i + 10] || 0, 15, -1051523);
+      b = md5ii(b, c, d, a, words[i + 1] || 0, 21, -2054922799);
+      a = md5ii(a, b, c, d, words[i + 8] || 0, 6, 1873313359);
+      d = md5ii(d, a, b, c, words[i + 15] || 0, 10, -30611744);
+      c = md5ii(c, d, a, b, words[i + 6] || 0, 15, -1560198380);
+      b = md5ii(b, c, d, a, words[i + 13] || 0, 21, 1309151649);
+      a = md5ii(a, b, c, d, words[i + 4] || 0, 6, -145523070);
+      d = md5ii(d, a, b, c, words[i + 11] || 0, 10, -1120210379);
+      c = md5ii(c, d, a, b, words[i + 2] || 0, 15, 718787259);
+      b = md5ii(b, c, d, a, words[i + 9] || 0, 21, -343485551);
+
+      a = safeAdd(a, olda);
+      b = safeAdd(b, oldb);
+      c = safeAdd(c, oldc);
+      d = safeAdd(d, oldd);
+    }
+
+    function rhex(n) {
+      let s = '', j = 0;
+      for (; j <= 3; j++) s += ((n >> (j * 8 + 4)) & 0x0f).toString(16) + ((n >> (j * 8)) & 0x0f).toString(16);
+      return s;
+    }
+    return rhex(a) + rhex(b) + rhex(c) + rhex(d);
+  }
+
+  // Global API
+  window.OVHashEngine = {
+    computeMD5,
+    recalculateHash,
+    setAlgorithm: (algo) => {
+      currentAlgo = algo;
+      recalculateHash();
+    },
+    toast
   };
 })();

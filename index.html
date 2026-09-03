@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#020617" />
-  <title>Offline Validator — Professional Local Form & Data Checker</title>
-  <meta name="description" content="A privacy-first, 100% local form & data validation platform. 18+ production validators, custom reversible hash codec, and encrypted client-side history." />
+  <meta name="theme-color" content="#000000" />
+  <title>Offline Hash Engine — Local Cryptographic Hash Generator</title>
+  <meta name="description" content="Minimalist, 100% in-browser cryptographic hash generator. Select 1 or multiple values to hash using SHA-256, SHA-512, MD5, and custom tokens." />
 
-  <!-- Inline favicon (gradient check) -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%236366f1'/><stop offset='.5' stop-color='%238b5cf6'/><stop offset='1' stop-color='%23ec4899'/></linearGradient></defs><rect width='24' height='24' rx='6' fill='url(%23g)'/><path d='M9 12.5l2 2 4-4.5' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>" />
+  <!-- Inline favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23ffffff'/><text x='12' y='17' font-family='monospace' font-size='14' font-weight='bold' fill='%23000000' text-anchor='middle'>#</text></svg>" />
 
   <!-- Prevent theme flash -->
   <script>
@@ -23,12 +23,12 @@
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Google Fonts: Inter + JetBrains Mono -->
+  <!-- Fonts: JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <!-- Custom design system -->
+  <!-- Design system -->
   <link rel="stylesheet" href="css/style.css" />
 
   <script>
@@ -36,7 +36,6 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
             mono: ['JetBrains Mono', 'monospace'],
           },
         },
@@ -45,94 +44,42 @@
   </script>
 </head>
 
-<body class="min-h-screen font-sans antialiased overflow-x-hidden">
+<body class="min-h-screen font-mono antialiased overflow-x-hidden">
 
-  <!-- Animated mesh background -->
-  <div class="bg-mesh" aria-hidden="true">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
-    <div class="blob blob-4"></div>
-  </div>
-
-  <!-- Top Navigation Glass Bar -->
-  <nav id="navbar" class="nav-glass sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
-        <a href="#overview" class="flex items-center gap-2.5 group">
-          <div class="relative">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/40 transition-transform group-hover:scale-110 group-hover:rotate-3">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.5 4.5h9a3 3 0 013 3v9a3 3 0 01-3 3h-9a3 3 0 01-3-3v-9a3 3 0 013-3z" />
-              </svg>
-            </div>
-            <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-slate-950 animate-pulse"></span>
-          </div>
-          <div class="hidden sm:block">
-            <h1 class="text-[15px] font-bold leading-tight tracking-tight">Offline Validator</h1>
-            <p class="text-[10px] text-slate-400 leading-tight tracking-wide uppercase">100% Client-Side Engine</p>
-          </div>
+  <!-- Minimalist Black & White Top Bar -->
+  <nav class="nav-mono">
+    <div class="max-w-3xl mx-auto px-4">
+      <div class="flex items-center justify-between h-14">
+        <a href="./" class="flex items-center gap-2 text-white hover:opacity-80 transition">
+          <span class="w-6 h-6 rounded bg-white text-black font-extrabold flex items-center justify-center text-xs">#</span>
+          <span class="font-bold text-sm tracking-wider uppercase">OFFLINE HASH</span>
         </a>
 
-        <!-- In-Page Anchor Links -->
-        <div id="nav-links" class="hidden md:flex items-center gap-0.5 p-1 rounded-xl border border-slate-800/40 bg-slate-900/30">
-          <a href="#overview" class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition">Overview</a>
-          <a href="#workbench" class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition">Workbench</a>
-          <a href="#validators" class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition">Validators</a>
-          <a href="#hash" class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition">Hash Codec</a>
-          <a href="#history" class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition">History</a>
-          <a href="#about" class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition">About</a>
-        </div>
-
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-3">
           <!-- Real-time Online / Offline status badge -->
-          <div id="online-status" class="status-dot online hidden sm:inline-flex" title="Browser Network Connectivity">
-            <span class="dot"></span>
-            <span id="online-status-text">Online</span>
+          <div id="online-status" class="badge-mono text-[10px]" title="Browser Network Connectivity">
+            <span id="online-status-dot" class="w-1.5 h-1.5 rounded-full bg-white"></span>
+            <span id="online-status-text">ONLINE</span>
           </div>
 
-          <!-- Dark / Light theme toggle button -->
-          <button id="theme-toggle" class="theme-toggle" data-tip="Toggle theme" aria-label="Toggle theme">
-            <svg class="icon-moon w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-            <svg class="icon-sun w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <!-- Black & White theme toggle button -->
+          <button id="theme-toggle" class="btn-mono !py-1 !px-2 text-xs uppercase" aria-label="Toggle theme">
+            <span id="theme-text">LIGHT</span>
           </button>
-
-          <!-- Mobile Menu Hamburger Button -->
-          <button id="mobile-menu-btn" class="md:hidden btn btn-secondary btn-icon btn-sm" aria-label="Open Navigation Menu">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Mobile Navigation Drawer -->
-      <div id="mobile-menu" class="mobile-menu hidden md:hidden -mx-4 sm:-mx-6 px-4 sm:px-6 pb-4 pt-2">
-        <div class="flex flex-col gap-1">
-          <a href="#overview" class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white">Overview</a>
-          <a href="#workbench" class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white">Workbench</a>
-          <a href="#validators" class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white">Validators</a>
-          <a href="#hash" class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white">Hash Codec</a>
-          <a href="#history" class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white">History</a>
-          <a href="#about" class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white">About</a>
-          <div class="divider my-2"></div>
-          <div id="online-status-mobile" class="status-dot online self-start">
-            <span class="dot"></span>
-            <span id="online-status-text-mobile">Online</span>
-          </div>
         </div>
       </div>
     </div>
   </nav>
 
-  <!-- Main Single Page Website Container -->
-  <main id="app" class="relative z-10"></main>
+  <!-- Main App Container -->
+  <main id="app"></main>
 
-  <!-- Toast Notification Container -->
-  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
 
-  <!-- Application Scripts (Zero Build Step) -->
+  <!-- Scripts -->
   <script src="js/hash.js"></script>
   <script src="js/storage.js"></script>
-  <script src="js/validators.js"></script>
   <script src="js/fileio.js"></script>
   <script src="js/pages.js"></script>
   <script src="js/app.js"></script>

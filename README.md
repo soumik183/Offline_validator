@@ -1,8 +1,8 @@
-# 🔐 Offline Validator — Developer & Integration Guide
+# 🔐 Offline Hash Engine — Developer & Integration Guide
 
-> **Professional-grade, privacy-first client validation platform & cryptographic token codec.**  
+> **Minimalist Black & White Cryptographic Hash & Token Engine.**  
 > 100% in-browser runtime. Zero cloud roundtrips, zero telemetry, zero build steps.  
-> Ships with 18+ production validators, custom v1/v2 reversible hash codecs, encrypted local audit storage, and a single-page architecture built for GitHub Pages.
+> Clean, focused single-page interface for generating hashes from 1 or multiple values across SHA-256, SHA-512, SHA-1, MD5, FNV-1a, and custom reversible tokens.
 
 ---
 

@@ -1,7 +1,7 @@
 /**
  * pages.js
  * Minimalist Black & White Multi-Type Encoder & Decoder Layout.
- * 100% Client-Side. Clean & Responsive.
+ * 100% Client-Side. Clean, Responsive & Detailed.
  */
 (function (global) {
   'use strict';
@@ -32,8 +32,9 @@
               <option value="number">Number</option>
               <option value="salt">Secret Key / Salt</option>
               <option value="json">JSON Data</option>
+              <option value="custom">Custom Type...</option>
             </select>
-            <button type="button" id="btn-add-type" class="btn-mono btn-mono-primary !py-1.5 !px-3 text-xs font-bold flex items-center gap-1">
+            <button type="button" id="btn-add-type" class="btn-mono btn-mono-primary !py-1.5 !px-3 text-xs font-bold flex items-center gap-1" title="Add new type field">
               <span>+ Add Type</span>
             </button>
           </div>
@@ -46,10 +47,13 @@
 
         <!-- Optional Secret Key / Salt -->
         <div class="pt-2 border-t border-neutral-800">
-          <label class="block text-[11px] font-bold text-neutral-400 uppercase mb-1">
-            Secret Key / Salt <span class="text-neutral-500 font-normal">(Optional — used to encrypt/lock the token)</span>
-          </label>
-          <input type="text" id="encoder-secret-key" class="input-mono text-xs font-mono" placeholder="Optional password or secret salt..." />
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-[11px] font-bold text-neutral-400 uppercase">
+              Secret Key / Salt <span class="text-neutral-500 font-normal">(Optional — used to encrypt/lock the token)</span>
+            </label>
+          </div>
+          <input type="text" id="encoder-secret-key" class="input-mono text-xs font-mono" placeholder="Optional password or custom salt..." />
+          <div class="text-[10px] text-neutral-500 font-mono mt-1">Details: Optional password or secret key to lock the token. (ex: <span class="text-neutral-300">"my-secret-key#2026"</span>)</div>
         </div>
 
         <!-- Encode Action Buttons -->
@@ -74,6 +78,7 @@
             </button>
           </div>
           <textarea id="encoder-output-text" rows="3" readonly class="hash-output-box text-xs resize-y w-full font-mono"></textarea>
+          <div class="text-[10px] text-neutral-500 font-mono mt-1">Details: Fully reversible cryptographic stream token with embedded FNV-1a checksum.</div>
         </div>
       </div>
 
@@ -97,6 +102,7 @@
             <button type="button" id="btn-paste-decoder" class="btn-mono !py-0.5 !px-2 text-[10px]">Paste from Clipboard</button>
           </div>
           <textarea id="decoder-input-text" rows="3" class="input-mono text-xs font-mono resize-y" placeholder="Paste v1$... token here to decode and extract types &amp; values..."></textarea>
+          <div class="text-[10px] text-neutral-500 font-mono mt-1">Details: Paste the full token generated from the Encoder above. (ex: <span class="text-neutral-300">"v1$salt$checksum$payload..."</span>)</div>
         </div>
 
         <!-- Optional Secret Key / Salt for Decoding -->
@@ -105,6 +111,7 @@
             Secret Key / Salt <span class="text-neutral-500 font-normal">(Leave empty if no custom key was used)</span>
           </label>
           <input type="text" id="decoder-secret-key" class="input-mono text-xs font-mono" placeholder="Enter salt/key if the token was locked..." />
+          <div class="text-[10px] text-neutral-500 font-mono mt-1">Details: Enter the secret key only if you locked the token when encoding. (ex: <span class="text-neutral-300">"my-secret-key#2026"</span>)</div>
         </div>
 
         <!-- Decode Action Buttons -->

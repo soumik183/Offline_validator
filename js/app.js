@@ -261,14 +261,14 @@
       const isCustom = f.type === 'custom';
 
       return `
-        <div class="p-3.5 sm:p-4 bg-neutral-900/60 border border-neutral-800 rounded-lg space-y-2.5 transition-all" data-field-id="${f.id}">
+        <div class="p-2.5 sm:p-3.5 bg-neutral-900/60 border border-neutral-800 rounded-lg space-y-2 transition-all" data-field-id="${f.id}">
           <!-- Top Row: Field Number + In-place Type Selector + Actions -->
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="badge-mono text-[10px] !bg-neutral-800 font-bold">Field #${idx + 1}</span>
+          <div class="flex flex-wrap items-center justify-between gap-1.5">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="badge-mono !py-0.5 !px-1.5 text-[9px] sm:text-[10px] !bg-neutral-800 font-bold">#${idx + 1}</span>
 
               <!-- In-place Type Selector to change type anytime -->
-              <select class="field-type-select input-mono !py-1 !px-2.5 !text-xs !w-auto font-bold cursor-pointer" data-field-id="${f.id}" title="Change type for this field">
+              <select class="field-type-select input-mono !py-1 !px-2 !text-xs font-bold cursor-pointer max-w-[155px] sm:max-w-none" data-field-id="${f.id}" title="Change type for this field">
                 <option value="text" ${f.type === 'text' ? 'selected' : ''}>Text / Message</option>
                 <option value="uuid" ${f.type === 'uuid' ? 'selected' : ''}>UUID (v4)</option>
                 <option value="userid" ${f.type === 'userid' ? 'selected' : ''}>User ID (usr_...)</option>
@@ -282,19 +282,19 @@
               </select>
 
               ${isCustom ? `
-                <input type="text" class="field-custom-name input-mono !py-1 !px-2 !text-xs !w-32 font-bold" data-field-id="${f.id}" value="${escapeHtml(f.customName || 'Custom')}" placeholder="Custom type name..." title="Name your custom type" />
+                <input type="text" class="field-custom-name input-mono !py-1 !px-2 !text-xs !w-24 sm:!w-32 font-bold" data-field-id="${f.id}" value="${escapeHtml(f.customName || 'Custom')}" placeholder="Type name..." title="Name your custom type" />
               ` : ''}
             </div>
 
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1">
               ${hasGen ? `
                 <button type="button" class="btn-gen-field btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}">
                   ${def.genLabel || '⚡ Generate'}
                 </button>
               ` : ''}
               ${fields.length > 1 ? `
-                <button type="button" class="btn-rem-field btn-mono !py-0.5 !px-2 text-[10px] text-neutral-400 hover:text-white" data-field-id="${f.id}" title="Remove this field">
-                  ✕ Remove
+                <button type="button" class="btn-rem-field btn-mono !py-0.5 !px-1.5 text-[10px] text-neutral-400 hover:text-white" data-field-id="${f.id}" title="Remove this field">
+                  ✕
                 </button>
               ` : ''}
             </div>
@@ -302,19 +302,19 @@
 
           <!-- 1. Single Date & Time: Calendar & Clock Picker + Format Selector -->
           ${isDate ? `
-            <div class="p-2.5 bg-black/60 border border-neutral-800 rounded space-y-2 text-xs">
-              <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-1.5">
-                  <span class="text-neutral-400 font-bold uppercase text-[10px]">📅 Calendar &amp; Time Picker:</span>
-                  <input type="datetime-local" class="field-dt-calendar input-mono !py-1 !px-2 !text-xs !w-auto cursor-pointer" data-field-id="${f.id}" value="${getIsoForDateTimeLocal(f.value)}" title="Click to open interactive calendar and clock" />
+            <div class="p-2 bg-black/60 border border-neutral-800 rounded space-y-1.5 text-xs">
+              <div class="flex flex-wrap items-center justify-between gap-1.5">
+                <div class="flex items-center gap-1.5 flex-1 min-w-[160px]">
+                  <span class="text-neutral-400 font-bold uppercase text-[9px] sm:text-[10px]">📅 Calendar:</span>
+                  <input type="datetime-local" class="field-dt-calendar input-mono !py-0.5 !px-2 text-xs flex-1 cursor-pointer" data-field-id="${f.id}" value="${getIsoForDateTimeLocal(f.value)}" title="Click to open interactive calendar and clock" />
                 </div>
-                <button type="button" class="btn-date-now btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}" title="Set to current date and time">
-                  ⚡ Set Current Time
+                <button type="button" class="btn-date-now btn-mono !py-0.5 !px-2 text-[10px] whitespace-nowrap" data-field-id="${f.id}" title="Set to current date and time">
+                  ⚡ Set Now
                 </button>
               </div>
-              <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-neutral-800/80">
-                <span class="text-neutral-400 font-bold uppercase text-[10px]">Format:</span>
-                <select class="field-date-format input-mono !py-0.5 !px-2 !text-[11px] !w-auto font-mono cursor-pointer" data-field-id="${f.id}" title="Select date/time representation format">
+              <div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-neutral-800/80">
+                <span class="text-neutral-400 font-bold uppercase text-[9px] sm:text-[10px]">Format:</span>
+                <select class="field-date-format input-mono !py-0.5 !px-1.5 !text-[10px] sm:!text-[11px] !w-auto font-mono cursor-pointer" data-field-id="${f.id}" title="Select date/time format">
                   <option value="iso" ${f.dateFormat === 'iso' ? 'selected' : ''}>ISO 8601 (YYYY-MM-DDTHH:mm:ssZ)</option>
                   <option value="dateonly" ${f.dateFormat === 'dateonly' ? 'selected' : ''}>Date Only (YYYY-MM-DD)</option>
                   <option value="human" ${f.dateFormat === 'human' ? 'selected' : ''}>Human (DD/MM/YYYY HH:mm:ss)</option>
@@ -327,46 +327,46 @@
 
           <!-- 2. Date to Date (Range): Start Calendar to End Calendar -->
           ${isDateRange ? `
-            <div class="p-2.5 bg-black/60 border border-neutral-800 rounded space-y-2 text-xs">
-              <div class="flex flex-wrap items-center gap-2">
-                <div class="flex items-center gap-1.5">
-                  <span class="text-neutral-400 font-bold uppercase text-[10px]">📅 From:</span>
-                  <input type="date" class="field-dr-from input-mono !py-1 !px-2 !text-xs !w-auto cursor-pointer" data-field-id="${f.id}" value="${f.dateFrom || getCurrentYMD()}" title="Start Date Calendar" />
+            <div class="p-2 bg-black/60 border border-neutral-800 rounded space-y-1.5 text-xs">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <div class="flex items-center gap-1 flex-1 min-w-[130px]">
+                  <span class="text-neutral-400 font-bold uppercase text-[9px] sm:text-[10px]">From:</span>
+                  <input type="date" class="field-dr-from input-mono !py-0.5 !px-1.5 text-xs flex-1 cursor-pointer" data-field-id="${f.id}" value="${f.dateFrom || getCurrentYMD()}" title="Start Date Calendar" />
                 </div>
                 <span class="text-neutral-500 font-bold">→</span>
-                <div class="flex items-center gap-1.5">
-                  <span class="text-neutral-400 font-bold uppercase text-[10px]">📅 To:</span>
-                  <input type="date" class="field-dr-to input-mono !py-1 !px-2 !text-xs !w-auto cursor-pointer" data-field-id="${f.id}" value="${f.dateTo || getPlusDaysYMD(7)}" title="End Date Calendar" />
+                <div class="flex items-center gap-1 flex-1 min-w-[130px]">
+                  <span class="text-neutral-400 font-bold uppercase text-[9px] sm:text-[10px]">To:</span>
+                  <input type="date" class="field-dr-to input-mono !py-0.5 !px-1.5 text-xs flex-1 cursor-pointer" data-field-id="${f.id}" value="${f.dateTo || getPlusDaysYMD(7)}" title="End Date Calendar" />
                 </div>
               </div>
-              <div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-neutral-800/80">
-                <span class="text-neutral-400 text-[10px] uppercase font-bold">Quick Presets:</span>
-                <button type="button" class="btn-dr-preset btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}" data-days="7">+7 Days</button>
-                <button type="button" class="btn-dr-preset btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}" data-days="14">+14 Days</button>
-                <button type="button" class="btn-dr-preset btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}" data-days="30">+30 Days</button>
+              <div class="flex flex-wrap items-center gap-1 pt-1 border-t border-neutral-800/80">
+                <span class="text-neutral-400 text-[9px] uppercase font-bold">Presets:</span>
+                <button type="button" class="btn-dr-preset btn-mono !py-0.5 !px-1.5 text-[9px] sm:text-[10px]" data-field-id="${f.id}" data-days="7">+7 Days</button>
+                <button type="button" class="btn-dr-preset btn-mono !py-0.5 !px-1.5 text-[9px] sm:text-[10px]" data-field-id="${f.id}" data-days="14">+14 Days</button>
+                <button type="button" class="btn-dr-preset btn-mono !py-0.5 !px-1.5 text-[9px] sm:text-[10px]" data-field-id="${f.id}" data-days="30">+30 Days</button>
               </div>
             </div>
           ` : ''}
 
           <!-- 3. Time to Time (Range): Start Clock to End Clock -->
           ${isTimeRange ? `
-            <div class="p-2.5 bg-black/60 border border-neutral-800 rounded space-y-2 text-xs">
-              <div class="flex flex-wrap items-center gap-2">
-                <div class="flex items-center gap-1.5">
-                  <span class="text-neutral-400 font-bold uppercase text-[10px]">⏰ Start Time:</span>
-                  <input type="time" class="field-tr-from input-mono !py-1 !px-2 !text-xs !w-auto cursor-pointer" data-field-id="${f.id}" value="${f.timeFrom || '09:00'}" title="Start Time Clock" />
+            <div class="p-2 bg-black/60 border border-neutral-800 rounded space-y-1.5 text-xs">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <div class="flex items-center gap-1 flex-1 min-w-[110px]">
+                  <span class="text-neutral-400 font-bold uppercase text-[9px] sm:text-[10px]">Start:</span>
+                  <input type="time" class="field-tr-from input-mono !py-0.5 !px-1.5 text-xs flex-1 cursor-pointer" data-field-id="${f.id}" value="${f.timeFrom || '09:00'}" title="Start Time Clock" />
                 </div>
                 <span class="text-neutral-500 font-bold">→</span>
-                <div class="flex items-center gap-1.5">
-                  <span class="text-neutral-400 font-bold uppercase text-[10px]">⏰ End Time:</span>
-                  <input type="time" class="field-tr-to input-mono !py-1 !px-2 !text-xs !w-auto cursor-pointer" data-field-id="${f.id}" value="${f.timeTo || '17:00'}" title="End Time Clock" />
+                <div class="flex items-center gap-1 flex-1 min-w-[110px]">
+                  <span class="text-neutral-400 font-bold uppercase text-[9px] sm:text-[10px]">End:</span>
+                  <input type="time" class="field-tr-to input-mono !py-0.5 !px-1.5 text-xs flex-1 cursor-pointer" data-field-id="${f.id}" value="${f.timeTo || '17:00'}" title="End Time Clock" />
                 </div>
               </div>
-              <div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-neutral-800/80">
-                <span class="text-neutral-400 text-[10px] uppercase font-bold">Quick Presets:</span>
-                <button type="button" class="btn-tr-preset btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}" data-from="09:00" data-to="17:00">9-to-5 Shift (8h)</button>
-                <button type="button" class="btn-tr-preset btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}" data-from="08:00" data-to="12:00">Morning (4h)</button>
-                <button type="button" class="btn-tr-preset btn-mono !py-0.5 !px-2 text-[10px]" data-field-id="${f.id}" data-from="13:00" data-to="21:00">Evening (8h)</button>
+              <div class="flex flex-wrap items-center gap-1 pt-1 border-t border-neutral-800/80">
+                <span class="text-neutral-400 text-[9px] uppercase font-bold">Presets:</span>
+                <button type="button" class="btn-tr-preset btn-mono !py-0.5 !px-1.5 text-[9px] sm:text-[10px]" data-field-id="${f.id}" data-from="09:00" data-to="17:00">9-5 Shift</button>
+                <button type="button" class="btn-tr-preset btn-mono !py-0.5 !px-1.5 text-[9px] sm:text-[10px]" data-field-id="${f.id}" data-from="08:00" data-to="12:00">Morning</button>
+                <button type="button" class="btn-tr-preset btn-mono !py-0.5 !px-1.5 text-[9px] sm:text-[10px]" data-field-id="${f.id}" data-from="13:00" data-to="21:00">Evening</button>
               </div>
             </div>
           ` : ''}
@@ -374,14 +374,14 @@
           <!-- Value Input / Textarea -->
           <div>
             ${def.multiline ? `
-              <textarea rows="2" class="input-field-val input-mono text-xs font-mono resize-y" data-field-id="${f.id}" placeholder="${escapeHtml(def.placeholder)}">${escapeHtml(f.value)}</textarea>
+              <textarea rows="2" class="input-field-val input-mono !py-1.5 !px-2.5 text-xs font-mono resize-y w-full" data-field-id="${f.id}" placeholder="${escapeHtml(def.placeholder)}">${escapeHtml(f.value)}</textarea>
             ` : `
-              <input type="text" class="input-field-val input-mono text-xs font-mono" data-field-id="${f.id}" value="${escapeHtml(f.value)}" placeholder="${escapeHtml(def.placeholder)}" />
+              <input type="text" class="input-field-val input-mono !py-1.5 !px-2.5 text-xs font-mono w-full" data-field-id="${f.id}" value="${escapeHtml(f.value)}" placeholder="${escapeHtml(def.placeholder)}" />
             `}
           </div>
 
           <!-- Little bit of details and example for all textareas / inputs -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-neutral-400 font-mono gap-1 pt-0.5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between text-[10px] sm:text-[11px] text-neutral-400 font-mono gap-0.5 pt-0.5">
             <span>Details: ${escapeHtml(isDate ? getDateDetailsString(f.dateFormat) : def.details)}</span>
             <span class="text-neutral-500 font-normal">ex: <span class="text-neutral-300 font-semibold">${escapeHtml(isDate ? getDateExampleString(f.dateFormat) : def.example)}</span></span>
           </div>
@@ -760,20 +760,20 @@
       if (fieldsList) {
         fieldsList.innerHTML = parsedPayload.fields.map((f, i) => {
           const def = TYPE_DEFS[f.type] || TYPE_DEFS.text;
-          const formatNote = f.dateFormat ? ` [Format: ${f.dateFormat.toUpperCase()}]` : '';
+          const formatNote = f.dateFormat ? ` [${f.dateFormat.toUpperCase()}]` : '';
           return `
-            <div class="p-3.5 sm:p-4 bg-neutral-900 border border-neutral-800 rounded-lg space-y-2">
+            <div class="p-2.5 sm:p-3 bg-neutral-900 border border-neutral-800 rounded-lg space-y-1.5">
               <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2">
-                  <span class="badge-mono text-[10px] font-bold">Field #${f.id || i + 1}</span>
-                  <span class="badge-mono text-[10px] badge-mono-invert font-bold">${escapeHtml(f.name || f.type || 'Custom')}${formatNote}</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="badge-mono !py-0.5 !px-1.5 text-[9px] sm:text-[10px] font-bold">Field #${f.id || i + 1}</span>
+                  <span class="badge-mono !py-0.5 !px-1.5 text-[9px] sm:text-[10px] badge-mono-invert font-bold">${escapeHtml(f.name || f.type || 'Custom')}${formatNote}</span>
                 </div>
-                <button type="button" class="btn-copy-val btn-mono !py-0.5 !px-2.5 text-[10px] font-bold" data-val="${escapeHtml(f.val)}">
+                <button type="button" class="btn-copy-val btn-mono !py-0.5 !px-2 text-[10px] font-bold" data-val="${escapeHtml(f.val)}">
                   Copy Value
                 </button>
               </div>
-              <div class="hash-output-box text-xs font-mono !bg-black">${escapeHtml(f.val || '(empty)')}</div>
-              <div class="text-[10px] text-neutral-500 font-mono">Type Details: ${escapeHtml(def.details || 'Decoded field value.')}</div>
+              <div class="hash-output-box !py-1.5 !px-2.5 text-xs font-mono !bg-black">${escapeHtml(f.val || '(empty)')}</div>
+              <div class="text-[9px] sm:text-[10px] text-neutral-500 font-mono">Details: ${escapeHtml(def.details || 'Decoded field value.')}</div>
             </div>
           `;
         }).join('');
@@ -783,18 +783,18 @@
       if (titleEl) titleEl.textContent = 'DECODED SUCCESSFULLY · 1 VALUE DETECTED';
       if (fieldsList) {
         fieldsList.innerHTML = `
-          <div class="p-3.5 sm:p-4 bg-neutral-900 border border-neutral-800 rounded-lg space-y-2">
+          <div class="p-2.5 sm:p-3 bg-neutral-900 border border-neutral-800 rounded-lg space-y-1.5">
             <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <span class="badge-mono text-[10px] font-bold">Field #1</span>
-                <span class="badge-mono text-[10px] badge-mono-invert font-bold">Plain Text</span>
+              <div class="flex items-center gap-1.5">
+                <span class="badge-mono !py-0.5 !px-1.5 text-[9px] sm:text-[10px] font-bold">Field #1</span>
+                <span class="badge-mono !py-0.5 !px-1.5 text-[9px] sm:text-[10px] badge-mono-invert font-bold">Plain Text</span>
               </div>
-              <button type="button" class="btn-copy-val btn-mono !py-0.5 !px-2.5 text-[10px] font-bold" data-val="${escapeHtml(decodedRaw)}">
+              <button type="button" class="btn-copy-val btn-mono !py-0.5 !px-2 text-[10px] font-bold" data-val="${escapeHtml(decodedRaw)}">
                 Copy Value
               </button>
             </div>
-            <div class="hash-output-box text-xs font-mono !bg-black">${escapeHtml(decodedRaw)}</div>
-            <div class="text-[10px] text-neutral-500 font-mono">Type Details: Single plain text value decoded from legacy or single-string token.</div>
+            <div class="hash-output-box !py-1.5 !px-2.5 text-xs font-mono !bg-black">${escapeHtml(decodedRaw)}</div>
+            <div class="text-[9px] sm:text-[10px] text-neutral-500 font-mono">Details: Single plain text value decoded from legacy or single-string token.</div>
           </div>
         `;
       }

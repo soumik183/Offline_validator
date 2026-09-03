@@ -48,22 +48,22 @@
 
   <!-- Minimalist Black & White Top Bar -->
   <nav class="nav-mono">
-    <div class="max-w-3xl mx-auto px-3 sm:px-6">
-      <div class="flex items-center justify-between h-14">
-        <a href="./" class="flex items-center gap-2 text-white hover:opacity-80 transition">
-          <span class="w-6 h-6 rounded bg-white text-black font-extrabold flex items-center justify-center text-xs">#</span>
+    <div class="max-w-3xl mx-auto px-3 sm:px-4">
+      <div class="flex items-center justify-between h-12 sm:h-13">
+        <a href="./" class="flex items-center gap-1.5 sm:gap-2 text-white hover:opacity-80 transition">
+          <span class="w-5 h-5 sm:w-6 sm:h-6 rounded bg-white text-black font-extrabold flex items-center justify-center text-[10px] sm:text-xs">#</span>
           <span class="font-bold text-xs sm:text-sm tracking-wider uppercase">OFFLINE CODEC</span>
         </a>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 sm:gap-3">
           <!-- Real-time Online / Offline status badge -->
-          <div id="online-status" class="badge-mono text-[10px]" title="Browser Network Connectivity">
+          <div id="online-status" class="badge-mono !py-0.5 !px-2 text-[9px] sm:text-[10px]" title="Browser Network Connectivity">
             <span id="online-status-dot" class="w-1.5 h-1.5 rounded-full bg-white"></span>
-            <span id="online-status-text">OFFLINE READY</span>
+            <span id="online-status-text" class="hidden xs:inline sm:inline">OFFLINE READY</span>
           </div>
 
           <!-- Black & White theme toggle button -->
-          <button id="theme-toggle" class="btn-mono !py-1 !px-2 text-xs uppercase" aria-label="Toggle theme">
+          <button id="theme-toggle" class="btn-mono !py-0.5 !px-2 text-[10px] sm:text-xs uppercase" aria-label="Toggle theme">
             <span id="theme-text">LIGHT</span>
           </button>
         </div>

@@ -113,6 +113,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
   font-feature-settings: "cv11", "ss01", "ss03";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -820,3 +821,95 @@ input[type=number] { -moz-appearance: textfield; }
   content: ''; display: inline-block; width: 1.5rem; height: 1px;
   background: linear-gradient(90deg, transparent, currentColor);
 }
+
+/* ---------- Light theme contrast & readability overrides ---------- */
+:root[data-theme="light"] body {
+  background-color: var(--bg-0);
+  color: var(--text-1);
+}
+:root[data-theme="light"] .text-slate-100,
+:root[data-theme="light"] .text-white {
+  color: #0f172a !important;
+}
+:root[data-theme="light"] .text-slate-200 {
+  color: #1e293b !important;
+}
+:root[data-theme="light"] .text-slate-300 {
+  color: #334155 !important;
+}
+:root[data-theme="light"] .text-slate-400 {
+  color: #475569 !important;
+}
+:root[data-theme="light"] .text-slate-500 {
+  color: #64748b !important;
+}
+:root[data-theme="light"] .bg-slate-900\/60,
+:root[data-theme="light"] .bg-slate-900\/40,
+:root[data-theme="light"] .bg-slate-900\/30 {
+  background-color: rgba(241, 245, 249, 0.9) !important;
+}
+:root[data-theme="light"] .bg-slate-950\/80,
+:root[data-theme="light"] .bg-slate-950\/60 {
+  background-color: #f8fafc !important;
+}
+:root[data-theme="light"] .border-slate-800,
+:root[data-theme="light"] .border-slate-800\/60,
+:root[data-theme="light"] .border-slate-800\/40,
+:root[data-theme="light"] .border-slate-700,
+:root[data-theme="light"] .border-slate-700\/60 {
+  border-color: rgba(148, 163, 184, 0.25) !important;
+}
+:root[data-theme="light"] .code-block {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+:root[data-theme="light"] .result-ok {
+  background: rgba(16, 185, 129, 0.08) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+:root[data-theme="light"] .result-ok .text-emerald-200 {
+  color: #065f46 !important;
+}
+:root[data-theme="light"] .result-ok .text-emerald-300\/80,
+:root[data-theme="light"] .result-ok .text-emerald-300 {
+  color: #047857 !important;
+}
+:root[data-theme="light"] .result-fail {
+  background: rgba(244, 63, 94, 0.08) !important;
+  border-color: rgba(244, 63, 94, 0.35) !important;
+}
+:root[data-theme="light"] .result-fail .text-rose-200 {
+  color: #9f1239 !important;
+}
+:root[data-theme="light"] .result-fail .text-rose-300\/80,
+:root[data-theme="light"] .result-fail .text-rose-300 {
+  color: #be123c !important;
+}
+
+/* ---------- Active validator selection in grid ---------- */
+.validator-card.active {
+  border-color: #818cf8 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.6), 0 10px 25px -5px rgba(99, 102, 241, 0.3) !important;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.06)) !important;
+}
+:root[data-theme="light"] .validator-card.active {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4), 0 8px 20px -4px rgba(99, 102, 241, 0.2) !important;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(255, 255, 255, 0.95)) !important;
+}
+
+/* ---------- Drag and drop zone ---------- */
+.drag-zone {
+  border: 2px dashed var(--border-3);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.drag-zone.drag-over {
+  border-color: var(--brand-400) !important;
+  background-color: rgba(99, 102, 241, 0.12) !important;
+}
+
+/* ---------- Footer removal ---------- */
+footer, .app-footer {
+  display: none !important;
+}
+

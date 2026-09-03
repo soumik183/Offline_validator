@@ -384,3 +384,6 @@
     return this;
   };
   OVBulk.prototype.getMeta = function () { return Object.assign({}, this.meta); };
+
+  global.OVBulk = OVBulk;
+})(window);

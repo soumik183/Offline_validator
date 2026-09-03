@@ -26,8 +26,9 @@ global.document = {
   documentElement: {}
 };
 
-require('/storage/emulated/0/soumik/offlinevalidetor/js/hash.js');
-require('/storage/emulated/0/soumik/offlinevalidetor/js/fileio.js');
+const path = require('path');
+require(path.join(__dirname, '../js/hash.js'));
+require(path.join(__dirname, '../js/fileio.js'));
 
 const OVFileIO = global.OVFileIO;
 const OVHash   = global.OVHash;

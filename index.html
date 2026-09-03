@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#020617" />
-  <title>Offline Validator — Professional local form checker</title>
-  <meta name="description" content="A privacy-first, 100% local form & data validation platform. 18+ validators, custom hash pipeline, and encrypted local history." />
+  <title>Offline Validator — Professional Local Form & Data Checker</title>
+  <meta name="description" content="A privacy-first, 100% local form & data validation platform. 18+ production validators, custom reversible hash codec, and encrypted client-side history." />
 
   <!-- Inline favicon (gradient check) -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%236366f1'/><stop offset='.5' stop-color='%238b5cf6'/><stop offset='1' stop-color='%23ec4899'/></linearGradient></defs><rect width='24' height='24' rx='6' fill='url(%23g)'/><path d='M9 12.5l2 2 4-4.5' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>" />
@@ -15,7 +15,7 @@
     (function () {
       try {
         var t = localStorage.getItem('ov-theme');
-        if (t) document.documentElement.setAttribute('data-theme', t);
+        if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
       } catch (_) {}
     })();
   </script>
@@ -23,7 +23,7 @@
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Fonts: Inter (UI) + JetBrains Mono (code) + Geist Mono (numbers) -->
+  <!-- Google Fonts: Inter + JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -45,7 +45,7 @@
   </script>
 </head>
 
-<body class="min-h-screen text-slate-100 font-sans antialiased overflow-x-hidden">
+<body class="min-h-screen font-sans antialiased overflow-x-hidden">
 
   <!-- Animated mesh background -->
   <div class="bg-mesh" aria-hidden="true">
@@ -55,11 +55,11 @@
     <div class="blob blob-4"></div>
   </div>
 
-  <!-- Top Navbar -->
+  <!-- Top Navigation Glass Bar -->
   <nav id="navbar" class="nav-glass sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
-        <a href="/" data-link class="flex items-center gap-2.5 group">
+        <a href="#overview" class="flex items-center gap-2.5 group">
           <div class="relative">
             <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/40 transition-transform group-hover:scale-110 group-hover:rotate-3">
               <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
@@ -70,46 +70,49 @@
           </div>
           <div class="hidden sm:block">
             <h1 class="text-[15px] font-bold leading-tight tracking-tight">Offline Validator</h1>
-            <p class="text-[10px] text-slate-400 leading-tight tracking-wide uppercase">Professional local checks</p>
+            <p class="text-[10px] text-slate-400 leading-tight tracking-wide uppercase">100% Client-Side Engine</p>
           </div>
         </a>
 
+        <!-- In-Page Anchor Links -->
         <div id="nav-links" class="hidden md:flex items-center gap-0.5 p-1 rounded-xl border border-slate-800/40 bg-slate-900/30">
-          <a href="/" data-link class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition" data-route="/">Home</a>
-          <a href="/dashboard" data-link class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition" data-route="/dashboard">Dashboard</a>
-          <a href="/history" data-link class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition" data-route="/history">History</a>
-          <a href="/hash" data-link class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition" data-route="/hash">Hash</a>
-          <a href="/about" data-link class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition" data-route="/about">About</a>
+          <a href="#overview" class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition">Overview</a>
+          <a href="#workbench" class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition">Workbench</a>
+          <a href="#validators" class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition">Validators</a>
+          <a href="#hash" class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition">Hash Codec</a>
+          <a href="#history" class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition">History</a>
+          <a href="#about" class="nav-link px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-300 hover:text-white transition">About</a>
         </div>
 
         <div class="flex items-center gap-2">
-          <!-- Status pill -->
-          <div id="online-status" class="status-dot online hidden sm:inline-flex" title="Connection status">
+          <!-- Real-time Online / Offline status badge -->
+          <div id="online-status" class="status-dot online hidden sm:inline-flex" title="Browser Network Connectivity">
             <span class="dot"></span>
             <span id="online-status-text">Online</span>
           </div>
 
-          <!-- Theme toggle -->
+          <!-- Dark / Light theme toggle button -->
           <button id="theme-toggle" class="theme-toggle" data-tip="Toggle theme" aria-label="Toggle theme">
             <svg class="icon-moon w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
             <svg class="icon-sun w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
           </button>
 
-          <!-- Mobile menu btn -->
-          <button id="mobile-menu-btn" class="md:hidden btn btn-secondary btn-icon btn-sm" aria-label="Menu">
+          <!-- Mobile Menu Hamburger Button -->
+          <button id="mobile-menu-btn" class="md:hidden btn btn-secondary btn-icon btn-sm" aria-label="Open Navigation Menu">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
         </div>
       </div>
 
-      <!-- Mobile menu -->
+      <!-- Mobile Navigation Drawer -->
       <div id="mobile-menu" class="mobile-menu hidden md:hidden -mx-4 sm:-mx-6 px-4 sm:px-6 pb-4 pt-2">
         <div class="flex flex-col gap-1">
-          <a href="/" data-link class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white" data-route="/">Home</a>
-          <a href="/dashboard" data-link class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white" data-route="/dashboard">Dashboard</a>
-          <a href="/history" data-link class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white" data-route="/history">History</a>
-          <a href="/hash" data-link class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white" data-route="/hash">Hash Playground</a>
-          <a href="/about" data-link class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white" data-route="/about">About</a>
+          <a href="#overview" class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white">Overview</a>
+          <a href="#workbench" class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white">Workbench</a>
+          <a href="#validators" class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white">Validators</a>
+          <a href="#hash" class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white">Hash Codec</a>
+          <a href="#history" class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white">History</a>
+          <a href="#about" class="nav-link px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white">About</a>
           <div class="divider my-2"></div>
           <div id="online-status-mobile" class="status-dot online self-start">
             <span class="dot"></span>
@@ -120,74 +123,17 @@
     </div>
   </nav>
 
-  <!-- Main app container -->
+  <!-- Main Single Page Website Container -->
   <main id="app" class="relative z-10"></main>
 
-  <!-- Toast container -->
+  <!-- Toast Notification Container -->
   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
 
-  <!-- Footer -->
-  <footer class="app-footer mt-16 sm:mt-24">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-        <div class="col-span-2 sm:col-span-2 lg:col-span-1">
-          <div class="flex items-center gap-2.5 mb-3">
-            <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/30">
-              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.5 4.5h9a3 3 0 013 3v9a3 3 0 01-3 3h-9a3 3 0 01-3-3v-9a3 3 0 013-3z"/></svg>
-            </div>
-            <span class="font-bold tracking-tight text-base">Offline Validator</span>
-          </div>
-          <p class="text-xs text-slate-400 leading-relaxed max-w-xs">
-            Professional-grade form &amp; data validation that runs 100% in your browser. Zero servers, zero tracking, zero build steps.
-          </p>
-        </div>
-        <div>
-          <h4 class="eyebrow !mb-3">Product</h4>
-          <ul class="space-y-2 text-slate-400 text-sm">
-            <li><a href="/dashboard" data-link class="link-underline hover:text-slate-200 inline-block">Validators</a></li>
-            <li><a href="/hash" data-link class="link-underline hover:text-slate-200 inline-block">Hash Playground</a></li>
-            <li><a href="/history" data-link class="link-underline hover:text-slate-200 inline-block">History</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4 class="eyebrow !mb-3">Resources</h4>
-          <ul class="space-y-2 text-slate-400 text-sm">
-            <li><a href="/about" data-link class="link-underline hover:text-slate-200 inline-block">About</a></li>
-            <li><a href="#" class="link-underline hover:text-slate-200 inline-block">Documentation</a></li>
-            <li><a href="#" class="link-underline hover:text-slate-200 inline-block">API Reference</a></li>
-            <li><a href="#" class="link-underline hover:text-slate-200 inline-block">Changelog</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4 class="eyebrow !mb-3">Legal</h4>
-          <ul class="space-y-2 text-slate-400 text-sm">
-            <li><a href="#" class="link-underline hover:text-slate-200 inline-block">Privacy</a></li>
-            <li><a href="#" class="link-underline hover:text-slate-200 inline-block">Terms</a></li>
-            <li><a href="#" class="link-underline hover:text-slate-200 inline-block">License</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="divider"></div>
-      <div class="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-        <p>© <span id="year"></span> Offline Validator. Crafted with precision for engineers who care.</p>
-        <div class="flex items-center gap-3 sm:gap-4 flex-wrap justify-center">
-          <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>localStorage</span>
-          <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>Custom hash</span>
-          <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-fuchsia-400"></span>Offline-first</span>
-        </div>
-      </div>
-    </div>
-  </footer>
-
-  <!-- Vendor libs -->
-  <script src="https://cdn.jsdelivr.net/npm/navigo@8.11.1/lib/navigo.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
-
-  <!-- App scripts (load order matters) -->
+  <!-- Application Scripts (Zero Build Step) -->
   <script src="js/hash.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/validators.js"></script>
+  <script src="js/fileio.js"></script>
   <script src="js/pages.js"></script>
   <script src="js/app.js"></script>
 </body>

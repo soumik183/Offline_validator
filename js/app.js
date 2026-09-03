@@ -24,6 +24,9 @@
     }
 
     wireCategoryTabs();
+    wireMobileCategorySelect();
+    wireQuickChips();
+    wireGlobalSearch();
     selectCategory(activeCatId, activeToolId);
   }
 
@@ -84,11 +87,113 @@
     const tabs = document.querySelectorAll('#cat-tabs .cat-tab');
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
         const catId = tab.dataset.cat;
         selectCategory(catId);
       });
+    });
+  }
+
+  function wireMobileCategorySelect() {
+    const sel = document.getElementById('mobile-cat-select');
+    if (!sel) return;
+    sel.addEventListener('change', (e) => {
+      selectCategory(e.target.value);
+    });
+  }
+
+  function wireQuickChips() {
+    document.querySelectorAll('#quick-chips .quick-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const cat = chip.dataset.gotoCat;
+        const tool = chip.dataset.gotoTool;
+        selectCategory(cat, tool);
+        document.getElementById('tool-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }
+
+  function wireGlobalSearch() {
+    const searchIn = document.getElementById('tool-search');
+    const dropdown = document.getElementById('search-dropdown');
+    if (!searchIn || !dropdown) return;
+
+    const categories = window.OVPages?.CATEGORIES || [];
+    const allTools = [];
+    categories.forEach(cat => {
+      (cat.tools || []).forEach(t => {
+        allTools.push({
+          catId: cat.id,
+          catName: cat.name,
+          toolId: t.id,
+          toolName: t.name,
+          desc: t.desc,
+        });
+      });
+    });
+
+    const renderResults = (query) => {
+      const q = query.trim().toLowerCase();
+      if (!q) {
+        dropdown.classList.add('hidden');
+        dropdown.innerHTML = '';
+        return;
+      }
+
+      const matches = allTools.filter(t =>
+        t.toolName.toLowerCase().includes(q) ||
+        t.desc.toLowerCase().includes(q) ||
+        t.catName.toLowerCase().includes(q) ||
+        t.toolId.toLowerCase().includes(q)
+      );
+
+      if (matches.length === 0) {
+        dropdown.innerHTML = `<div class="p-3 text-neutral-500">No matching tools found for "${escapeHtml(query)}"</div>`;
+        dropdown.classList.remove('hidden');
+        return;
+      }
+
+      dropdown.innerHTML = matches.map((m, idx) => `
+        <div class="search-item p-2.5 hover:bg-neutral-800 cursor-pointer border-b border-neutral-800 last:border-0 flex items-center justify-between gap-2 ${idx === 0 ? 'bg-neutral-800/50' : ''}" data-cat="${m.catId}" data-tool="${m.toolId}">
+          <div>
+            <span class="font-bold text-white">${escapeHtml(m.toolName)}</span>
+            <span class="text-[10px] text-neutral-400 block">${escapeHtml(m.desc)}</span>
+          </div>
+          <span class="badge-mono text-[9px]">${escapeHtml(m.catName.replace(/^[^\w]+/, ''))}</span>
+        </div>
+      `).join('');
+
+      dropdown.classList.remove('hidden');
+
+      dropdown.querySelectorAll('.search-item').forEach(item => {
+        item.addEventListener('click', () => {
+          selectCategory(item.dataset.cat, item.dataset.tool);
+          dropdown.classList.add('hidden');
+          searchIn.value = '';
+          document.getElementById('tool-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+    };
+
+    searchIn.addEventListener('input', (e) => renderResults(e.target.value));
+
+    searchIn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const first = dropdown.querySelector('.search-item');
+        if (first) {
+          selectCategory(first.dataset.cat, first.dataset.tool);
+          dropdown.classList.add('hidden');
+          searchIn.value = '';
+          document.getElementById('tool-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      } else if (e.key === 'Escape') {
+        dropdown.classList.add('hidden');
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!searchIn.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.add('hidden');
+      }
     });
   }
 
@@ -98,6 +203,17 @@
     if (!cat) return;
 
     activeToolId = defaultToolId || (cat.tools[0] && cat.tools[0].id);
+
+    // Sync desktop tabs
+    document.querySelectorAll('#cat-tabs .cat-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.cat === catId);
+    });
+
+    // Sync mobile select
+    const mobileSel = document.getElementById('mobile-cat-select');
+    if (mobileSel && mobileSel.value !== catId) {
+      mobileSel.value = catId;
+    }
 
     // Render subtools pills
     const subContainer = document.getElementById('subtool-tabs');
@@ -410,29 +526,33 @@
      ============================================================ */
   function renderEncodingTool(toolId) {
     return `
-      <div class="card-mono p-5 mb-5 space-y-4">
-        <div class="flex items-center justify-between mb-1">
+      <div class="card-mono p-4 sm:p-5 mb-5 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-1.5" id="enc-mode-pills">
             <button type="button" class="pill-tab active" data-mode="encode">Encode</button>
             <button type="button" class="pill-tab" data-mode="decode">Decode</button>
           </div>
-          <button type="button" id="btn-enc-swap" class="btn-mono !py-1 !px-2.5 text-xs">⇄ Swap</button>
+          <div class="flex items-center gap-1.5">
+            <button type="button" id="btn-enc-swap" class="btn-mono !py-1 !px-2.5 text-xs" title="Swap input and output">⇄ Swap</button>
+            <button type="button" id="btn-enc-sample" class="btn-mono !py-1 !px-2.5 text-xs">⚡ Sample</button>
+            <button type="button" id="btn-enc-clear" class="btn-mono !py-1 !px-2.5 text-xs text-neutral-400 hover:text-white">✕ Clear</button>
+          </div>
         </div>
 
         <div>
           <div class="flex items-center justify-between mb-1 text-[11px] text-neutral-400">
             <span id="enc-input-lbl" class="font-bold text-neutral-300 uppercase">Input Text to Encode</span>
-            <span id="enc-char-cnt">0 chars</span>
+            <span id="enc-char-cnt">0 chars (0 bytes)</span>
           </div>
-          <textarea id="enc-input" rows="4" class="input-mono text-xs resize-y" placeholder="Type or paste input…"></textarea>
+          <textarea id="enc-input" rows="4" class="input-mono text-xs resize-y" placeholder="Type or paste text to convert in real-time…"></textarea>
         </div>
 
         <div>
           <div class="flex items-center justify-between mb-1 text-[11px] text-neutral-400">
             <span id="enc-output-lbl" class="font-bold text-neutral-300 uppercase">Output Result</span>
-            <button type="button" id="btn-enc-copy" class="btn-mono !py-1 !px-2 text-[10px]">Copy</button>
+            <button type="button" id="btn-enc-copy" class="btn-mono !py-1 !px-3 text-xs font-bold">Copy Output</button>
           </div>
-          <textarea id="enc-output" rows="4" readonly class="hash-output-box text-xs resize-y w-full"></textarea>
+          <textarea id="enc-output" rows="4" readonly class="hash-output-box text-xs resize-y w-full" placeholder="Output result will appear here…"></textarea>
         </div>
       </div>
     `;
@@ -670,24 +790,33 @@
   function renderConvertersTool(toolId) {
     if (toolId === 'numberbase') {
       return `
-        <div class="card-mono p-5 mb-5 space-y-3">
-          <div><label class="block text-xs font-bold text-neutral-400 uppercase mb-1">Decimal (Base 10)</label><input type="text" id="nb-dec" class="input-mono text-xs font-mono" placeholder="12345" /></div>
-          <div><label class="block text-xs font-bold text-neutral-400 uppercase mb-1">Binary (Base 2)</label><input type="text" id="nb-bin" class="input-mono text-xs font-mono" placeholder="11000000111001" /></div>
-          <div><label class="block text-xs font-bold text-neutral-400 uppercase mb-1">Hexadecimal (Base 16)</label><input type="text" id="nb-hex" class="input-mono text-xs font-mono" placeholder="3039" /></div>
-          <div><label class="block text-xs font-bold text-neutral-400 uppercase mb-1">Octal (Base 8)</label><input type="text" id="nb-oct" class="input-mono text-xs font-mono" placeholder="30071" /></div>
+        <div class="card-mono p-4 sm:p-5 mb-5 space-y-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-neutral-300 uppercase">Reactive 4-Way Base Converter</span>
+            <div class="flex items-center gap-1.5">
+              <button type="button" id="btn-nb-sample" class="btn-mono !py-1 !px-2.5 text-xs">⚡ Sample (1337)</button>
+              <button type="button" id="btn-nb-clear" class="btn-mono !py-1 !px-2.5 text-xs text-neutral-400 hover:text-white">✕ Clear</button>
+            </div>
+          </div>
+          <div><label class="block text-[11px] font-bold text-neutral-400 uppercase mb-1">Decimal (Base 10)</label><input type="text" id="nb-dec" class="input-mono text-xs font-mono" placeholder="e.g. 1337" /></div>
+          <div><label class="block text-[11px] font-bold text-neutral-400 uppercase mb-1">Binary (Base 2)</label><input type="text" id="nb-bin" class="input-mono text-xs font-mono" placeholder="e.g. 10100111001" /></div>
+          <div><label class="block text-[11px] font-bold text-neutral-400 uppercase mb-1">Hexadecimal (Base 16)</label><input type="text" id="nb-hex" class="input-mono text-xs font-mono" placeholder="e.g. 539" /></div>
+          <div><label class="block text-[11px] font-bold text-neutral-400 uppercase mb-1">Octal (Base 8)</label><input type="text" id="nb-oct" class="input-mono text-xs font-mono" placeholder="e.g. 2471" /></div>
         </div>
       `;
     }
 
     if (toolId === 'jsonformatter') {
       return `
-        <div class="card-mono p-5 mb-5 space-y-4">
-          <div class="flex items-center justify-between">
+        <div class="card-mono p-4 sm:p-5 mb-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <label class="text-xs font-bold text-neutral-300 uppercase">Input JSON</label>
-            <div class="flex items-center gap-1.5">
+            <div class="flex flex-wrap items-center gap-1.5">
               <button type="button" id="btn-json-2" class="btn-mono !py-1 !px-2 text-xs">2 Spaces</button>
               <button type="button" id="btn-json-4" class="btn-mono !py-1 !px-2 text-xs">4 Spaces</button>
               <button type="button" id="btn-json-min" class="btn-mono !py-1 !px-2 text-xs">Minify</button>
+              <button type="button" id="btn-json-sample" class="btn-mono !py-1 !px-2 text-xs">⚡ Sample</button>
+              <button type="button" id="btn-json-clear" class="btn-mono !py-1 !px-2 text-xs text-neutral-400 hover:text-white">✕ Clear</button>
             </div>
           </div>
           <textarea id="json-fmt-in" rows="6" class="input-mono text-xs font-mono resize-y" placeholder='{"key": "value", "list": [1, 2, 3]}'></textarea>
@@ -699,13 +828,16 @@
 
     if (toolId === 'jsonyaml') {
       return `
-        <div class="card-mono p-5 mb-5 space-y-4">
-          <div class="flex items-center justify-between">
+        <div class="card-mono p-4 sm:p-5 mb-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-1.5" id="jy-mode-pills">
               <button type="button" class="pill-tab active" data-mode="toYaml">JSON → YAML</button>
               <button type="button" class="pill-tab" data-mode="toJson">YAML → JSON</button>
             </div>
-            <button type="button" id="btn-jy-sample" class="btn-mono !py-1 !px-2 text-xs">Sample</button>
+            <div class="flex items-center gap-1.5">
+              <button type="button" id="btn-jy-sample" class="btn-mono !py-1 !px-2.5 text-xs">⚡ Sample</button>
+              <button type="button" id="btn-jy-clear" class="btn-mono !py-1 !px-2.5 text-xs text-neutral-400 hover:text-white">✕ Clear</button>
+            </div>
           </div>
           <div>
             <label id="jy-in-lbl" class="block text-xs font-bold text-neutral-400 uppercase mb-1">Input JSON</label>
@@ -718,19 +850,21 @@
 
     if (toolId === 'csvjson') {
       return `
-        <div class="card-mono p-5 mb-5 space-y-4">
+        <div class="card-mono p-4 sm:p-5 mb-5 space-y-4">
           <div class="flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-1.5" id="cj-mode-pills">
               <button type="button" class="pill-tab active" data-mode="toJson">CSV → JSON</button>
               <button type="button" class="pill-tab" data-mode="toCsv">JSON → CSV</button>
             </div>
-            <div class="flex items-center gap-2 text-xs">
+            <div class="flex flex-wrap items-center gap-2 text-xs">
               <span class="text-neutral-400">Delimiter:</span>
               <select id="cj-delimiter" class="input-mono !py-1 !px-2 text-xs !w-auto">
                 <option value=",">Comma (,)</option>
                 <option value=";">Semicolon (;)</option>
                 <option value="&#9;">Tab (\t)</option>
               </select>
+              <button type="button" id="btn-cj-sample" class="btn-mono !py-1 !px-2.5 text-xs">⚡ Sample</button>
+              <button type="button" id="btn-cj-clear" class="btn-mono !py-1 !px-2.5 text-xs text-neutral-400 hover:text-white">✕ Clear</button>
             </div>
           </div>
           <div>
@@ -746,16 +880,18 @@
 
   function renderOutputCard(outputId, hasCompare = false) {
     return `
-      <div class="card-mono p-5 mb-5 border-neutral-700">
+      <div class="card-mono p-4 sm:p-5 mb-5 border-neutral-700">
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-bold uppercase tracking-wider text-white">Generated Output</span>
-          <button type="button" data-copy-target="${outputId}" class="btn-copy-out btn-mono btn-mono-primary !py-1 !px-3 text-xs font-bold">Copy Output</button>
+          <button type="button" data-copy-target="${outputId}" class="btn-copy-out btn-mono btn-mono-primary !py-1 !px-3 text-xs font-bold">
+            <span>Copy Output</span>
+          </button>
         </div>
-        <textarea id="${outputId}" rows="3" readonly class="hash-output-box text-xs resize-y w-full"></textarea>
+        <textarea id="${outputId}" rows="3" readonly class="hash-output-box text-xs resize-y w-full" placeholder="Output will appear here…"></textarea>
         ${hasCompare ? `
-          <div class="mt-3 pt-3 border-t border-neutral-800 flex items-center gap-2">
-            <input type="text" id="hash-compare-input" class="input-mono !py-1.5 text-xs" placeholder="Paste expected hash to compare…" />
-            <span id="hash-compare-badge" class="badge-mono text-[10px] hidden"></span>
+          <div class="mt-3 pt-3 border-t border-neutral-800 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <input type="text" id="hash-compare-input" class="input-mono !py-1.5 text-xs flex-1" placeholder="Paste expected token to compare…" />
+            <span id="hash-compare-badge" class="badge-mono text-[10px] hidden self-start sm:self-center"></span>
           </div>
         ` : ''}
       </div>
@@ -769,7 +905,7 @@
     const T = window.OVTools;
     if (!T) return;
 
-    // Global copy button handler
+    // Global copy button handler with visual feedback animation
     document.querySelectorAll('.btn-copy-out').forEach(btn => {
       btn.addEventListener('click', async () => {
         const targetId = btn.dataset.copyTarget;
@@ -777,7 +913,14 @@
         if (!target || !target.value) return;
         try {
           await navigator.clipboard.writeText(target.value);
-          toast('COPIED', target.value.slice(0, 28) + '…');
+          const origHtml = btn.innerHTML;
+          btn.classList.add('btn-copied');
+          btn.innerHTML = '<span>✓ COPIED!</span>';
+          setTimeout(() => {
+            btn.classList.remove('btn-copied');
+            btn.innerHTML = origHtml;
+          }, 1500);
+          toast('COPIED', target.value.slice(0, 32) + (target.value.length > 32 ? '…' : ''));
         } catch (_) {}
       });
     });
@@ -1067,8 +1210,17 @@
       const outputEl = document.getElementById('enc-output');
       const swapBtn = document.getElementById('btn-enc-swap');
 
+      const updateStats = (str) => {
+        const cntEl = document.getElementById('enc-char-cnt');
+        if (cntEl) {
+          const bytes = new TextEncoder().encode(str).length;
+          cntEl.textContent = `${str.length} chars (${bytes} bytes)`;
+        }
+      };
+
       const execute = () => {
         const str = inputEl?.value || '';
+        updateStats(str);
         if (!str) { if (outputEl) outputEl.value = ''; return; }
 
         try {
@@ -1090,6 +1242,8 @@
           document.querySelectorAll('#enc-mode-pills .pill-tab').forEach(b => b.classList.remove('active'));
           p.classList.add('active');
           mode = p.dataset.mode;
+          const inLbl = document.getElementById('enc-input-lbl');
+          if (inLbl) inLbl.textContent = mode === 'encode' ? 'Input Text to Encode' : 'Input Text to Decode';
           execute();
         });
       });
@@ -1104,14 +1258,44 @@
           document.querySelectorAll('#enc-mode-pills .pill-tab').forEach(p => {
             p.classList.toggle('active', p.dataset.mode === mode);
           });
+          const inLbl = document.getElementById('enc-input-lbl');
+          if (inLbl) inLbl.textContent = mode === 'encode' ? 'Input Text to Encode' : 'Input Text to Decode';
           execute();
         }
       });
 
-      document.getElementById('btn-enc-copy')?.addEventListener('click', async () => {
+      document.getElementById('btn-enc-sample')?.addEventListener('click', () => {
+        const samples = {
+          base64: 'Offline Suite 2026 — Zero Cloud Telemetry! 🚀',
+          url: 'https://example.com/api?user=Alice & Bob&lang=en&safe=true',
+          hex: 'Hello Offline World!',
+          binary: 'Hi 2026',
+          html: '<div class="banner">Hello & "Welcome" to Offline Suite!</div>',
+        };
+        if (inputEl) {
+          inputEl.value = samples[toolId] || 'Sample text 123';
+          execute();
+        }
+      });
+
+      document.getElementById('btn-enc-clear')?.addEventListener('click', () => {
+        if (inputEl) inputEl.value = '';
+        if (outputEl) outputEl.value = '';
+        updateStats('');
+      });
+
+      document.getElementById('btn-enc-copy')?.addEventListener('click', async (e) => {
         if (outputEl?.value) {
           await navigator.clipboard.writeText(outputEl.value);
-          toast('COPIED', 'Encoded output copied.');
+          const btn = e.currentTarget;
+          const origHtml = btn.innerHTML;
+          btn.classList.add('btn-copied');
+          btn.innerHTML = '<span>✓ COPIED!</span>';
+          setTimeout(() => {
+            btn.classList.remove('btn-copied');
+            btn.innerHTML = origHtml;
+          }, 1500);
+          toast('COPIED', outputEl.value.slice(0, 32) + (outputEl.value.length > 32 ? '…' : ''));
         }
       });
     }
@@ -1351,6 +1535,19 @@
       bin?.addEventListener('input', (e) => updateAll(2, e.target.value));
       hex?.addEventListener('input', (e) => updateAll(16, e.target.value));
       oct?.addEventListener('input', (e) => updateAll(8, e.target.value));
+
+      document.getElementById('btn-nb-sample')?.addEventListener('click', () => {
+        if (dec) {
+          dec.value = '1337';
+          updateAll(10, '1337');
+        }
+      });
+      document.getElementById('btn-nb-clear')?.addEventListener('click', () => {
+        if (dec) dec.value = '';
+        if (bin) bin.value = '';
+        if (hex) hex.value = '';
+        if (oct) oct.value = '';
+      });
     }
 
     if (toolId === 'jsonformatter') {
@@ -1379,6 +1576,18 @@
       document.getElementById('btn-json-2')?.addEventListener('click', () => format(2));
       document.getElementById('btn-json-4')?.addEventListener('click', () => format(4));
       document.getElementById('btn-json-min')?.addEventListener('click', () => format(0));
+      document.getElementById('btn-json-sample')?.addEventListener('click', () => {
+        if (inp) {
+          inp.value = JSON.stringify({ name: 'Offline Suite', version: 2, privacy: '100% Client-Side', tools: 29 }, null, 2);
+          format(2);
+        }
+      });
+      document.getElementById('btn-json-clear')?.addEventListener('click', () => {
+        if (inp) inp.value = '';
+        if (out) out.value = '';
+        if (st) st.classList.add('hidden');
+      });
+      inp?.addEventListener('input', () => format(2));
     }
 
     if (toolId === 'jsonyaml') {
@@ -1414,9 +1623,17 @@
       inp?.addEventListener('input', run);
       document.getElementById('btn-jy-sample')?.addEventListener('click', () => {
         if (inp) {
-          inp.value = JSON.stringify({ app: 'OfflineSuite', version: 2, features: ['identifiers', 'hashing', 'encoding'] }, null, 2);
+          if (mode === 'toYaml') {
+            inp.value = JSON.stringify({ app: 'OfflineSuite', build: 2026, tags: ['offline', 'crypto', 'tools'] }, null, 2);
+          } else {
+            inp.value = 'app: OfflineSuite\nbuild: 2026\ntags:\n  - offline\n  - crypto\n  - tools';
+          }
           run();
         }
+      });
+      document.getElementById('btn-jy-clear')?.addEventListener('click', () => {
+        if (inp) inp.value = '';
+        if (out) out.value = '';
       });
       run();
     }
@@ -1455,6 +1672,23 @@
 
       inp?.addEventListener('input', run);
       delim?.addEventListener('change', run);
+      document.getElementById('btn-cj-sample')?.addEventListener('click', () => {
+        if (inp) {
+          if (mode === 'toJson') {
+            inp.value = 'id,name,role,status\n1,Alice,Engineer,Active\n2,Bob,Designer,Pending\n3,Carol,Manager,Active';
+          } else {
+            inp.value = JSON.stringify([
+              { id: 1, name: 'Alice', role: 'Engineer' },
+              { id: 2, name: 'Bob', role: 'Designer' }
+            ], null, 2);
+          }
+          run();
+        }
+      });
+      document.getElementById('btn-cj-clear')?.addEventListener('click', () => {
+        if (inp) inp.value = '';
+        if (out) out.value = '';
+      });
       run();
     }
   }

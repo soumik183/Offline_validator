@@ -87,22 +87,53 @@
 
   function singlePage() {
     return `
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+    <div class="main-wrapper py-5 sm:py-8">
       <!-- Minimalist Header -->
-      <div class="mb-6 border-b border-neutral-800 pb-5">
+      <div class="mb-5 border-b border-neutral-800 pb-4">
         <div class="flex items-center justify-between gap-4 mb-2">
           <div class="inline-flex items-center gap-2">
-            <span class="w-2.5 h-2.5 bg-white rounded-full"></span>
+            <span class="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></span>
             <span class="text-xs font-bold tracking-widest uppercase text-neutral-400">OFFLINE MULTI-FORMAT SUITE</span>
           </div>
           <span class="badge-mono text-[10px]">100% IN-BROWSER · ZERO SERVERS</span>
         </div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-1">Developer Utility Suite</h1>
-        <p class="text-xs sm:text-sm text-neutral-400 mt-1">Multi-format encoder, decoder, hash engine, date utilities, random generators, and format converters.</p>
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white mt-1">Developer Utility Suite</h1>
+        <p class="text-xs sm:text-sm text-neutral-400 mt-1">Multi-format encoder, decoder, proprietary codec, date utilities, random generators, and format converters.</p>
       </div>
 
-      <!-- Category Navigation Tabs -->
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-2.5 mb-4 scrollbar-none" id="cat-tabs">
+      <!-- Quick Search & Filter Bar -->
+      <div class="relative mb-3">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutral-500">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+        <input type="text" id="tool-search" class="search-mono" placeholder="Quick search all 29+ tools (e.g. UUID, Base64, Token, Timestamp, YAML, JSON, Slug...)" autocomplete="off" />
+        <div id="search-dropdown" class="hidden absolute top-full left-0 right-0 z-50 mt-1 bg-neutral-900 border border-neutral-700 rounded-lg shadow-2xl max-h-64 overflow-y-auto font-mono text-xs"></div>
+      </div>
+
+      <!-- Quick Shortcut Chips -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-4 scrollbar-none" id="quick-chips">
+        <span class="text-[10px] text-neutral-500 uppercase font-bold tracking-wider mr-1 hidden sm:inline">Shortcuts:</span>
+        <button type="button" class="quick-chip" data-goto-cat="identifiers" data-goto-tool="uuid">UUID</button>
+        <button type="button" class="quick-chip" data-goto-cat="hashing" data-goto-tool="v1encode">Token Codec</button>
+        <button type="button" class="quick-chip" data-goto-cat="encoding" data-goto-tool="base64">Base64</button>
+        <button type="button" class="quick-chip" data-goto-cat="converters" data-goto-tool="jsonformatter">JSON Formatter</button>
+        <button type="button" class="quick-chip" data-goto-cat="converters" data-goto-tool="jsonyaml">JSON ↔ YAML</button>
+        <button type="button" class="quick-chip" data-goto-cat="datetime" data-goto-tool="timestampconverter">Timestamp</button>
+        <button type="button" class="quick-chip" data-goto-cat="text" data-goto-tool="caseconverter">Case Converter</button>
+      </div>
+
+      <!-- Mobile Category Dropdown (visible only on mobile) -->
+      <div class="sm:hidden mb-3">
+        <label for="mobile-cat-select" class="block text-[11px] font-bold text-neutral-400 uppercase mb-1">Select Category:</label>
+        <select id="mobile-cat-select" class="input-mono !py-2 text-xs font-bold bg-neutral-900">
+          ${CATEGORIES.map(cat => `
+            <option value="${cat.id}">${cat.name}</option>
+          `).join('')}
+        </select>
+      </div>
+
+      <!-- Desktop Category Navigation Tabs -->
+      <div class="hidden sm:flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 scrollbar-none" id="cat-tabs">
         ${CATEGORIES.map((cat, idx) => `
           <button type="button" class="cat-tab ${idx === 0 ? 'active' : ''}" data-cat="${cat.id}">
             ${cat.name}
@@ -111,7 +142,7 @@
       </div>
 
       <!-- Sub-tool Pills Navigation -->
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-2.5 mb-6 scrollbar-none" id="subtool-tabs"></div>
+      <div class="flex flex-wrap items-center gap-1.5 pb-2 mb-5" id="subtool-tabs"></div>
 
       <!-- Active Tool Workspace Card -->
       <div id="tool-workspace"></div>
